@@ -1,5 +1,7 @@
 ---
 import "../styles/global.css";
+
+const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
 ---
 
 <!DOCTYPE html>
@@ -46,7 +48,7 @@ import "../styles/global.css";
               >
                 <img
                   class="logo"
-                  src="/images/My photo.png"
+                  src={`${base}images/My photo.png`}
                   alt=""
                 />
 
@@ -132,17 +134,17 @@ import "../styles/global.css";
               <h2 class="what-i-do-title">What I do</h2>
 
               <article class="service-item">
-                <img class="service-media" src="/images/Car spin.gif" alt="3D visualization animation" />
+                <img class="service-media" src={`${base}images/Car spin.gif`} alt="3D visualization animation" />
                 <div class="service-caption">3D Visualization</div>
               </article>
 
               <article class="service-item">
-                <img class="service-media" src="/images/Posters.png" alt="Poster design" />
+                <img class="service-media" src={`${base}images/Posters.png`} alt="Poster design" />
                 <div class="service-caption">2D Graphic</div>
               </article>
 
               <article class="service-item">
-                <img class="service-media" src="/images/Snake.gif" alt="Snake motion graphic" />
+                <img class="service-media" src={`${base}images/Snake.gif`} alt="Snake motion graphic" />
                 <div class="service-caption">Motion</div>
               </article>
 
@@ -281,7 +283,7 @@ import "../styles/global.css";
         <div class="scroll-panel work-panel" id="work-panel" aria-label="Work panel">
           <main class="carousel" id="work">
             <article class="slide">
-              <img src="/images/cogs.png" alt="COGS Cycling Community brand identity" />
+              <img src={`${base}images/cogs.png`} alt="COGS Cycling Community brand identity" />
 
               <div class="project-hover-info">
                 <h2>COGS Cycling Community</h2>
@@ -290,7 +292,7 @@ import "../styles/global.css";
             </article>
 
             <article class="slide">
-              <img src="/images/kenya-coffee.png" alt="Kenya washed drip coffee packaging" />
+              <img src={`${base}images/kenya-coffee.png`} alt="Kenya washed drip coffee packaging" />
 
               <div class="project-hover-info">
                 <h2>Kenya Drip</h2>
@@ -299,7 +301,7 @@ import "../styles/global.css";
             </article>
 
             <article class="slide">
-              <img src="/images/beincrypto.png" alt="BeInCrypto Awards 2026 outdoor campaign" />
+              <img src={`${base}images/beincrypto.png`} alt="BeInCrypto Awards 2026 outdoor campaign" />
 
               <div class="project-hover-info">
                 <h2>BeInCrypto Awards 2026</h2>
@@ -308,7 +310,7 @@ import "../styles/global.css";
             </article>
 
             <article class="slide">
-              <img src="/images/heineken.png" alt="Heineken Formula 1 influencer kit" />
+              <img src={`${base}images/heineken.png`} alt="Heineken Formula 1 influencer kit" />
 
               <div class="project-hover-info">
                 <h2>Heineken × Formula 1</h2>
@@ -317,7 +319,7 @@ import "../styles/global.css";
             </article>
 
             <article class="slide">
-              <img src="/images/moretti.png" alt="Birra Moretti chalice packaging" />
+              <img src={`${base}images/moretti.png`} alt="Birra Moretti chalice packaging" />
 
               <div class="project-hover-info">
                 <h2>Birra Moretti Chalice</h2>
@@ -340,6 +342,6 @@ import "../styles/global.css";
       </div>
     </div>
 
-    <script is:inline src="/script.js"></script>
+    <script is:inline src={`${base}script.js`}></script>
   </body>
 </html>
