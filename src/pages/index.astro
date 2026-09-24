@@ -18,7 +18,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap" rel="stylesheet">
   </head>
 
-  <body id="top">
+  <body id="top" data-base-path={base}>
     <div class="page">
       <header class="site-header">
         <nav class="nav" aria-label="Primary">
@@ -37,27 +37,46 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
         </nav>
       </header>
 
-      <div class="content-layout">
+      <div class="content-stage">
+        <div class="main-view">
+          <div class="content-layout">
         <!-- LEFT COLUMN -->
         <div class="scroll-panel sidebar-panel">
           <aside class="sidebar">
             <div class="brand-block">
-              <a
-                class="brand"
-                href="#top"
-                aria-label="Nikita Puchko home"
-              >
-                <img
-                  class="logo"
-                  src={`${base}images/My photo.png`}
-                  alt=""
-                />
+              <div class="brand-main">
+                <a
+                  class="brand"
+                  href="#top"
+                  aria-label="Nikita Puchko home"
+                >
+                  <img
+                    class="logo"
+                    src={`${base}images/My photo.png`}
+                    alt="Nikita Puchko portrait"
+                  />
 
-                <div class="brand-text">
-                  <p class="name">Nikita Puchko</p>
-                  <p class="role">Graphic & Brand designer</p>
+                  <div class="brand-text">
+                    <p class="name">Nikita Puchko</p>
+                    <p class="role">Graphic &amp; Brand Designer</p>
+                  </div>
+                </a>
+              </div>
+
+              <div class="brand-status-row" aria-label="Work experience and availability">
+                <div class="brand-status brand-experience" aria-label="Work experience since January 2022">
+                  <span class="brand-status-label">WORK EXPERIENCE:</span>
+                  <strong class="brand-status-value work-years">0</strong>
+                  <span class="brand-status-unit">years</span>
+                  <strong class="brand-status-value work-days">0</strong>
+                  <span class="brand-status-unit">days</span>
                 </div>
-              </a>
+
+                <div class="brand-status brand-availability">
+                  <span class="brand-status-label">STATUS:</span>
+                  <strong class="brand-status-value">OPEN TO WORK</strong>
+                </div>
+              </div>
             </div>
 
             <section class="bio" id="about">
@@ -255,16 +274,63 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
               <span></span>
             </div>
 
-            <a class="contact" id="contact" href="mailto:hello@nikitapuchko.com">
-              Contact me
-            </a>
+            <footer class="footer" id="contact" aria-labelledby="footer-title">
+              <div class="footer-basement">
+                <img src={`${base}images/icons/Basement_bar.svg`} width="867" height="214" alt="" />
+              </div>
 
-            <footer class="footer">
-              <p>Nikita Puchko</p>
+              <div class="footer-main">
+                <h2 class="footer-title" id="footer-title">CONTACTS</h2>
 
-              <p class="footer-meta">
-                Graphic &amp; Brand designer
-              </p>
+                <div class="footer-contacts">
+                  <a class="footer-contact-row" href="https://www.instagram.com/nikita_makes_dsgn/" target="_blank" rel="noopener noreferrer">
+                    <img class="footer-contact-icon" src={`${base}images/icons/instagram_icon.svg`} alt="" />
+                    <span>@nikita_makes_dsgn</span>
+                  </a>
+                  <a class="footer-contact-row" href="https://www.behance.net/NikitaPuchko" target="_blank" rel="noopener noreferrer">
+                    <img class="footer-contact-icon" src={`${base}images/icons/behance_icon.svg`} alt="" />
+                    <span>www.behance.net/NikitaPuchko</span>
+                  </a>
+                  <a class="footer-contact-row" href="https://t.me/NikitaPuchko" target="_blank" rel="noopener noreferrer">
+                    <img class="footer-contact-icon" src={`${base}images/icons/telegram_icon.svg`} alt="" />
+                    <span>@NikitaPuchko</span>
+                  </a>
+                  <a class="footer-contact-row" href="https://www.linkedin.com/in/nikita-puchko/" target="_blank" rel="noopener noreferrer">
+                    <img class="footer-contact-icon" src={`${base}images/icons/linkedin_icon.svg`} alt="" />
+                    <span>https://www.linkedin.com/in/nikita-puchko/</span>
+                  </a>
+                  <a class="footer-contact-row" href="mailto:nikitapuchko@gmail.com">
+                    <img class="footer-contact-icon" src={`${base}images/icons/mail_icon.svg`} alt="" />
+                    <span>nikitapuchko@gmail.com</span>
+                  </a>
+                </div>
+
+                <div class="footer-divider" aria-hidden="true"></div>
+
+                <div class="footer-downloads">
+                  <p class="footer-download-description">
+                    You can download compact PDF<br />
+                    with my Portfolio or Resume:
+                  </p>
+                  <a class="footer-download-button" href={`${base}files/Nikita Puchko Portfolio.pdf`} download="Nikita Puchko Portfolio.pdf">
+                    <span class="footer-download-button-label">DOWNLOAD<br />PORTFOLIO</span>
+                    <span class="footer-download-button-icon" aria-hidden="true" style={`--pdf-icon-url: url("${base}images/icons/PDF_file_icon.svg")`}></span>
+                  </a>
+                  <a class="footer-download-button" href={`${base}files/Nikita Puchko CV.pdf`} download="Nikita Puchko CV.pdf">
+                    <span class="footer-download-button-label">DOWNLOAD<br />RESUME</span>
+                    <span class="footer-download-button-icon" aria-hidden="true" style={`--pdf-icon-url: url("${base}images/icons/PDF_file_icon.svg")`}></span>
+                  </a>
+                </div>
+
+                <div class="footer-divider footer-divider-bottom" aria-hidden="true"></div>
+
+                <div class="footer-bottom">
+                  <p class="footer-signature">
+                    <strong>Nikita Puchko</strong><span> • Graphic &amp; Brand Designer</span>
+                  </p>
+                  <p class="footer-cta">feel free to contact me</p>
+                </div>
+              </div>
             </footer>
           </aside>
 
@@ -283,7 +349,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
         <!-- RIGHT COLUMN -->
         <div class="scroll-panel work-panel" id="work-panel" aria-label="Work panel">
           <main class="carousel" id="work">
-            <article class="slide">
+            <article class="slide" data-project="cogs" tabindex="0">
               <img src={`${base}images/cogs.png`} alt="COGS Cycling Community brand identity" />
 
               <div class="project-hover-info">
@@ -292,16 +358,16 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
               </div>
             </article>
 
-            <article class="slide">
-              <img src={`${base}images/kenya-coffee.png`} alt="Kenya washed drip coffee packaging" />
+            <article class="slide" data-project="kenya" tabindex="0">
+              <img src={`${base}images/kenya-coffee.png`} alt="COIL Coffee packaging" />
 
               <div class="project-hover-info">
-                <h2>Kenya Drip</h2>
+                <h2>COIL Coffee</h2>
                 <p>Packaging design</p>
               </div>
             </article>
 
-            <article class="slide">
+            <article class="slide" data-project="beincrypto" tabindex="0">
               <img src={`${base}images/beincrypto.png`} alt="BeInCrypto Awards 2026 outdoor campaign" />
 
               <div class="project-hover-info">
@@ -310,7 +376,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
               </div>
             </article>
 
-            <article class="slide">
+            <article class="slide" data-project="heineken" tabindex="0">
               <img src={`${base}images/heineken.png`} alt="Heineken Formula 1 influencer kit" />
 
               <div class="project-hover-info">
@@ -319,7 +385,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
               </div>
             </article>
 
-            <article class="slide">
+            <article class="slide" data-project="moretti" tabindex="0">
               <img src={`${base}images/moretti.png`} alt="Birra Moretti chalice packaging" />
 
               <div class="project-hover-info">
@@ -338,6 +404,14 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
             </div>
 
             <button class="scroll-button scroll-down" type="button" aria-label="Scroll down"></button>
+          </div>
+        </div>
+          </div>
+        </div>
+
+        <div class="project-detail-view" aria-live="polite">
+          <div class="project-detail-scroller">
+            <div class="project-detail-content"></div>
           </div>
         </div>
       </div>

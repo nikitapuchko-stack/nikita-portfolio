@@ -1,3 +1,294 @@
+const basePath = document.body.dataset.basePath || "/";
+
+const projectDefinitions = {
+  cogs: {
+    title: "COGS Cycling Community",
+    category: "Brand identity",
+    hero: `${basePath}images/cogs.png`,
+    meta: {
+      type: "Brand identity",
+      role: "Art-director, graphic designer",
+      client: "COGS pet-project",
+      year: "2026"
+    },
+    overview: "COGS Cycling Community is a club-first identity system built to bring together training culture, local community, and a premium cycling aesthetic.",
+    sections: [
+      { type: "text", eyebrow: "Design task", text: "Build a versatile brand that feels premium, contemporary, and rooted in the energy of urban cycling culture while staying memorable across print, motion, and digital outputs." },
+      { type: "text", eyebrow: "Solution", text: "The identity balances a confident wordmark, bold editorial rhythm, and a modular system that supports both community messaging and product storytelling." },
+      { type: "text", eyebrow: "Design system", text: "A simple palette, expressive typography, and repeatable asset language produce a system that scales cleanly from jerseys to social graphics, campaign posters, and event materials." },
+      { type: "image", src: `${basePath}images/cogs.png`, alt: "COGS Cycling Community identity application" },
+      { type: "grid", items: [
+        { label: "Typography", value: "Bold, condensed wordmarks paired with editorial spacing for maximum clarity and energy." },
+        { label: "Brand assets", value: "The system combines logotype, badge work, and flexible campaign templates to support everyday club communications." },
+        { label: "Applications", value: "From poster systems to digital touchpoints, the design remains visually consistent without feeling rigid." },
+        { label: "Atmosphere", value: "A sharp blue palette and confident geometry create a sense of motion, trust, and identity-driven momentum." }
+      ] }
+    ]
+  },
+  kenya: {
+    title: "COIL Coffee",
+    category: "Packaging design",
+    hero: `${basePath}images/kenya-coffee.png`,
+    meta: {
+      type: "Brand identity",
+      role: "Art-director, graphic designer",
+      client: "COIL pet-project",
+      year: "2025"
+    },
+    overview: "COIL Coffee packaging brings the terroir and craft of Kenyan coffee into a refined retail language built for premium shelf presence.",
+    sections: [
+      { type: "text", eyebrow: "Design task", text: "Create a packaging system that feels premium, traceable, and globally legible while celebrating the origin story of the coffee." },
+      { type: "text", eyebrow: "Solution", text: "The system balances clarity, warmth, and regional identity through material cues, confident typography, and a higher-end product narrative." },
+      { type: "image", src: `${basePath}images/kenya-coffee.png`, alt: "COIL Coffee packaging detail" }
+    ]
+  },
+  beincrypto: {
+    title: "BeInCrypto Awards 2026",
+    category: "Campaign identity",
+    hero: `${basePath}images/beincrypto.png`,
+    meta: {
+      type: "Event identity",
+      role: "Art-director, graphic designer",
+      client: "BeInCrypto",
+      year: "2026"
+    },
+    overview: "An outdoor campaign identity designed to spotlight the event with strong visibility, premium pacing, and bold digital-first communication.",
+    sections: [
+      { type: "text", eyebrow: "Design task", text: "Structure a clean yet high-energy campaign system that can carry a large event narrative across multiple formats and touchpoints." },
+      { type: "text", eyebrow: "Solution", text: "The visual direction uses strong modular blocks, precise hierarchy, and a high-contrast palette to keep the campaign immediate and professional." },
+      { type: "image", src: `${basePath}images/beincrypto.png`, alt: "BeInCrypto Awards 2026 campaign imagery" }
+    ]
+  },
+  heineken: {
+    title: "Heineken × Formula 1",
+    category: "Experiential kit",
+    hero: `${basePath}images/heineken.png`,
+    meta: {
+      type: "Experiential kit",
+      role: "Art-director, graphic designer, 3D artist",
+      client: "Heineken x F1",
+      year: "2025"
+    },
+    overview: "A kits-of-parts experiential direction built to support event presence, creator moments, and premium brand storytelling at the intersection of sport and culture.",
+    sections: [
+      { type: "text", eyebrow: "Design task", text: "Develop a compact yet premium kit that communicates speed, design discipline, and hospitality across experiential moments." },
+      { type: "text", eyebrow: "Solution", text: "Clear modular layouts, precise product shots, and a strong visual cadence create a polished, fast-moving brand language for the event environment." },
+      { type: "image", src: `${basePath}images/heineken.png`, alt: "Heineken Formula 1 kit" }
+    ]
+  },
+  moretti: {
+    title: "Birra Moretti Chalice",
+    category: "Packaging design",
+    hero: `${basePath}images/moretti.png`,
+    meta: {
+      type: "Packaging design",
+      role: "Graphic designer, 3D artist",
+      client: "Birra Moretti",
+      year: "2025"
+    },
+    overview: "A premium chalice packaging concept built around ritual, craft, and celebratory cues while staying rooted in a recognizable premium beverage culture.",
+    sections: [
+      { type: "text", eyebrow: "Design task", text: "Translate the product story into a premium object with a memorable silhouette, tactile presence, and a distinct brand voice." },
+      { type: "text", eyebrow: "Solution", text: "The design uses a simplified packaging system with elevated finishes and a warm, celebratory visual language that feels premium without becoming heavy." },
+      { type: "image", src: `${basePath}images/moretti.png`, alt: "Birra Moretti chalice packaging design" }
+    ]
+  }
+};
+
+const projectDetailState = {
+  savedSidebarTop: 0,
+  savedWorkTop: 0,
+  wasWorkOpen: false,
+  openProjectId: null
+};
+
+function renderProjectSection(section) {
+  if (!section) return "";
+
+  if (section.type === "text") {
+    return `
+      <section class="project-block project-text">
+        <div class="project-block-label">${section.eyebrow}</div>
+        <p>${section.text}</p>
+      </section>
+    `;
+  }
+
+  if (section.type === "image") {
+    return `
+      <figure class="project-block project-image">
+        <img src="${section.src}" alt="${section.alt || "Project image"}" />
+        ${section.caption ? `<figcaption>${section.caption}</figcaption>` : ""}
+      </figure>
+    `;
+  }
+
+  if (section.type === "grid") {
+    const items = (section.items || []).map((item) => `
+      <div class="project-grid-item">
+        <strong>${item.label}</strong>
+        <p>${item.value}</p>
+      </div>
+    `).join("");
+
+    return `
+      <section class="project-block project-grid">
+        <div class="project-grid-items">
+          ${items}
+        </div>
+      </section>
+    `;
+  }
+
+  return "";
+}
+
+function renderProjectDetail(projectId) {
+  const project = projectDefinitions[projectId];
+  const projectDetailContent = document.querySelector(".project-detail-content");
+
+  if (!project || !projectDetailContent) return;
+
+  const sections = (project.sections || []).map(renderProjectSection).join("");
+  const metaItems = project.meta
+    ? [
+        project.meta.type,
+        project.meta.role,
+        project.meta.client,
+        project.meta.year
+      ]
+    : [];
+
+  const metadataMarkup = metaItems.length
+    ? `
+      <section class="project-meta" aria-label="Project information">
+        <div class="project-meta-column">
+          <div class="project-meta-heading">project type</div>
+          <div class="project-meta-value">${project.meta.type}</div>
+        </div>
+
+        <div class="project-meta-column">
+          <div class="project-meta-heading">my role</div>
+          <div class="project-meta-value">${project.meta.role}</div>
+        </div>
+
+        <div class="project-meta-column">
+          <div class="project-meta-heading">client</div>
+          <div class="project-meta-value">${project.meta.client}</div>
+        </div>
+
+        <div class="project-meta-column">
+          <div class="project-meta-heading">year</div>
+          <div class="project-meta-value">${project.meta.year}</div>
+        </div>
+      </section>
+    `
+    : "";
+
+  projectDetailContent.innerHTML = `
+    <div class="project-detail-title-bar">
+      <button class="project-back-button" type="button" aria-label="Back to work">← Back</button>
+      <h1>${project.title}</h1>
+    </div>
+
+    <section class="project-detail-hero">
+      <img src="${project.hero}" alt="${project.title}" />
+    </section>
+
+    ${metadataMarkup}
+
+    <article class="project-case-study">
+      <section class="project-block project-overview">
+        <h2 class="project-section-title">OVERVIEW</h2>
+        <p>${project.overview}</p>
+      </section>
+      ${sections}
+    </article>
+  `;
+
+  const backButton = projectDetailContent.querySelector(".project-back-button");
+  backButton?.addEventListener("click", closeProjectDetailView);
+}
+
+function openProjectDetailView(projectId) {
+  const stage = document.querySelector(".content-stage");
+  const layout = document.querySelector(".content-layout");
+  const projectDetailScroller = document.querySelector(".project-detail-scroller");
+  const sidebarScroller = document.querySelector(".scroll-panel.sidebar-panel .sidebar");
+  const workScroller = document.querySelector(".work-panel .carousel");
+
+  const project = projectDefinitions[projectId];
+
+  if (!stage || !project) return;
+
+  projectDetailState.savedSidebarTop = sidebarScroller ? sidebarScroller.scrollTop : 0;
+  projectDetailState.savedWorkTop = workScroller ? workScroller.scrollTop : 0;
+  projectDetailState.wasWorkOpen = window.matchMedia("(max-width: 960px)").matches && !!(layout && layout.classList.contains("is-work-open"));
+  projectDetailState.openProjectId = projectId;
+
+  renderProjectDetail(projectId);
+  stage.classList.add("is-project-open");
+
+  if (projectDetailScroller) {
+    projectDetailScroller.scrollTop = 0;
+  }
+}
+
+function closeProjectDetailView() {
+  const stage = document.querySelector(".content-stage");
+  const layout = document.querySelector(".content-layout");
+  const sidebarScroller = document.querySelector(".scroll-panel.sidebar-panel .sidebar");
+  const workScroller = document.querySelector(".work-panel .carousel");
+
+  if (!stage) return;
+
+  stage.classList.remove("is-project-open");
+
+  if (layout && window.matchMedia("(max-width: 960px)").matches) {
+    if (projectDetailState.wasWorkOpen) {
+      layout.classList.add("is-work-open");
+    } else {
+      layout.classList.remove("is-work-open");
+    }
+  }
+
+  if (sidebarScroller) {
+    sidebarScroller.scrollTop = projectDetailState.savedSidebarTop;
+  }
+
+  if (workScroller) {
+    workScroller.scrollTop = projectDetailState.savedWorkTop;
+  }
+
+  projectDetailState.openProjectId = null;
+}
+
+function initProjectDetailView() {
+  const carousel = document.querySelector(".work-panel .carousel");
+
+  if (!carousel) return;
+
+  carousel.addEventListener("click", (event) => {
+    const slide = event.target.closest(".slide[data-project]");
+
+    if (!slide || !carousel.contains(slide)) return;
+
+    openProjectDetailView(slide.dataset.project);
+  });
+
+  carousel.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    const slide = event.target.closest(".slide[data-project]");
+
+    if (!slide || !carousel.contains(slide)) return;
+
+    event.preventDefault();
+
+    openProjectDetailView(slide.dataset.project);
+  });
+}
+
 function initSidebarCustomScrollbar() {
   const sidebarPanel = document.querySelector(".scroll-panel.sidebar-panel");
 
@@ -109,6 +400,54 @@ function initSidebarCustomScrollbar() {
   window.addEventListener("resize", updateDot);
 
   updateDot();
+}
+
+function initWorkExperienceCounter() {
+  const yearsElement = document.querySelector(".work-years");
+  const daysElement = document.querySelector(".work-days");
+
+  if (!yearsElement || !daysElement) return;
+
+  const now = new Date();
+  const startDate = new Date(2022, 0, 1);
+  const today = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+
+  let years = today.getFullYear() - startDate.getFullYear();
+
+  const anniversaryThisYear = new Date(
+    today.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+
+  if (today < anniversaryThisYear) {
+    years -= 1;
+  }
+
+  const lastAnniversary = new Date(
+    startDate.getFullYear() + years,
+    startDate.getMonth(),
+    startDate.getDate()
+  );
+
+  const anniversaryDate = new Date(
+    lastAnniversary.getFullYear(),
+    lastAnniversary.getMonth(),
+    lastAnniversary.getDate()
+  );
+
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const days = Math.max(
+    0,
+    Math.floor((today - anniversaryDate) / millisecondsPerDay)
+  );
+
+  yearsElement.textContent = String(years);
+  daysElement.textContent = String(days);
 }
 
 function initSkillSetAnimation() {
@@ -519,6 +858,7 @@ function setupWorkCarouselLifecycle() {
 
 function initCustomScrollbars() {
   initSidebarCustomScrollbar();
+  initWorkExperienceCounter();
   initSkillSetAnimation();
   setupWorkCarouselLifecycle();
 }
@@ -599,12 +939,14 @@ if (document.readyState === "loading") {
     "DOMContentLoaded",
     () => {
       initCustomScrollbars();
+      initProjectDetailView();
       initMobileWorkPanel();
       initMobileProjectOverlay();
     }
   );
 } else {
   initCustomScrollbars();
+  initProjectDetailView();
   initMobileWorkPanel();
   initMobileProjectOverlay();
 }
