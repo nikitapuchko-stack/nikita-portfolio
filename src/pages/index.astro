@@ -1,6 +1,10 @@
 ---
 import "../styles/global.css";
 import NavDotIcon from "../components/NavDotIcon.astro";
+import backToListSource from "../../public/images/Header buttons/BackToList_button.svg?raw";
+
+// Inline the local asset like the other header icons; no runtime asset URL.
+const backToListSvg = backToListSource.replaceAll('fill="#008CFF"', 'fill="currentColor"');
 
 const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
 ---
@@ -43,6 +47,9 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
           >
             <NavDotIcon name="work" />
           </a>
+          <button class="nav-back-to-list" type="button" aria-label="Back to project list">
+            <span aria-hidden="true" set:html={backToListSvg} />
+          </button>
         </nav>
       </header>
 
@@ -298,7 +305,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
                   </a>
                   <a class="footer-contact-row" href="https://www.behance.net/NikitaPuchko" target="_blank" rel="noopener noreferrer">
                     <img class="footer-contact-icon" src={`${base}images/icons/behance_icon.svg`} alt="" />
-                    <span>www.behance.net/NikitaPuchko</span>
+                    <span>behance.net/NikitaPuchko</span>
                   </a>
                   <a class="footer-contact-row" href="https://t.me/NikitaPuchko" target="_blank" rel="noopener noreferrer">
                     <img class="footer-contact-icon" src={`${base}images/icons/telegram_icon.svg`} alt="" />
@@ -306,7 +313,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
                   </a>
                   <a class="footer-contact-row" href="https://www.linkedin.com/in/nikita-puchko/" target="_blank" rel="noopener noreferrer">
                     <img class="footer-contact-icon" src={`${base}images/icons/linkedin_icon.svg`} alt="" />
-                    <span>https://www.linkedin.com/in/nikita-puchko/</span>
+                    <span>linkedin.com/in/nikita-puchko/</span>
                   </a>
                   <a class="footer-contact-row" href="mailto:nikitapuchko@gmail.com">
                     <img class="footer-contact-icon" src={`${base}images/icons/mail_icon.svg`} alt="" />
@@ -395,10 +402,10 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
             </article>
 
             <article class="slide" data-project="moretti" tabindex="0">
-              <img src={`${base}images/moretti.png`} alt="Birra Moretti chalice packaging" />
+              <img src={`${base}images/moretti.png`} alt="Birra Moretti packaging" />
 
               <div class="project-hover-info">
-                <h2>Birra Moretti Chalice</h2>
+                <h2>Birra Moretti</h2>
                 <p>Packaging design</p>
               </div>
             </article>
@@ -419,7 +426,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
         </div>
 
         <div class="project-detail-view" aria-live="polite">
-          <div class="project-detail-scroller">
+          <div class="project-detail-scroller" id="project-detail-scroller">
             <div class="project-detail-content"></div>
           </div>
         </div>

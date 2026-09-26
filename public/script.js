@@ -139,7 +139,7 @@ const projectDefinitions = {
       { src: `${basePath}images/Project_img/Birra_13_gr.jpg`, layout: "grid" },
       { src: `${basePath}images/Project_img/Birra_14_gr.jpg`, layout: "grid" }
     ],
-    title: "Birra Moretti Chalice",
+    title: "Birra Moretti",
     category: "Packaging design",
     hero: `${basePath}images/moretti.png`,
     meta: {
@@ -195,13 +195,37 @@ function renderProjectGallery(images = [], title = "Project") {
   `).join("");
 }
 
+function renderProjectDotSeparator() {
+  return '<div class="project-dot-separator" aria-hidden="true"></div>';
+}
+
+let projectDotObserver;
+function initProjectDotSeparators(container) {
+  projectDotObserver?.disconnect();
+  projectDotObserver = new ResizeObserver((entries) => {
+    entries.forEach(({ target, contentRect }) => {
+      const style = getComputedStyle(target);
+      const size = parseFloat(style.getPropertyValue("--separator-dot-size"));
+      const gap = parseFloat(style.getPropertyValue("--separator-dot-gap"));
+      const count = Math.max(1, Math.floor((contentRect.width + gap) / (size + gap)));
+      if (target.childElementCount === count) return;
+      target.replaceChildren(...Array.from({ length: count }, () => document.createElement("span")));
+    });
+  });
+  container.querySelectorAll(".project-dot-separator").forEach((row) => projectDotObserver.observe(row));
+}
+
 function renderProjectDetail(projectId) {
   const project = projectDefinitions[projectId];
   const projectDetailContent = document.querySelector(".project-detail-content");
 
   if (!project || !projectDetailContent) return;
 
-  const sections = (project.sections || []).map(renderProjectSection).join("");
+  const sections = (project.sections || []).map((section, index, items) => {
+    const separator = section.type === "text" && items[index - 1]?.type === "text"
+      ? renderProjectDotSeparator() : "";
+    return separator + renderProjectSection(section);
+  }).join("");
   const metaItems = project.meta
     ? [
         project.meta.type,
@@ -213,7 +237,7 @@ function renderProjectDetail(projectId) {
 
   const metadataMarkup = metaItems.length
     ? `
-      <section class="project-meta" aria-label="Project information">
+      <section class="project-meta" data-project-section="overview" aria-label="Project information">
         <div class="project-meta-column">
           <div class="project-meta-heading">project type</div>
           <div class="project-meta-value">${project.meta.type}</div>
@@ -239,7 +263,6 @@ function renderProjectDetail(projectId) {
 
   projectDetailContent.innerHTML = `
     <div class="project-detail-title-bar">
-      <button class="project-back-button" type="button" aria-label="Back to work">← Back</button>
       <h1>${project.title}</h1>
     </div>
 
@@ -256,15 +279,17 @@ function renderProjectDetail(projectId) {
       </section>
       ${renderProjectSection({ type: "image", ...project.leadImage, alt: project.title + " project image 1" })}
       ${sections}
-      <div class="project-block project-gallery">
+      <div class="project-block project-gallery" data-project-section="gallery">
         ${renderProjectGallery(project.gallery, project.title)}
       </div>
     </article>
   `;
 
-  const backButton = projectDetailContent.querySelector(".project-back-button");
-  backButton?.addEventListener("click", closeProjectDetailView);
+  initProjectDotSeparators(projectDetailContent);
+  projectDetailContent.querySelector(".project-text")?.setAttribute("data-project-section", "details");
 }
+
+let destroyProjectScrollUI = () => {};
 
 function openProjectDetailView(projectId) {
   const stage = document.querySelector(".content-stage");
@@ -276,10 +301,13 @@ function openProjectDetailView(projectId) {
   const project = projectDefinitions[projectId];
 
   if (!stage || !project) return;
+  destroyProjectScrollUI();
+  document.querySelector(".nav-back-to-list")?._cancelFade?.();
 
   projectDetailState.savedSidebarTop = sidebarScroller ? sidebarScroller.scrollTop : 0;
   projectDetailState.savedWorkTop = workScroller ? workScroller.scrollTop : 0;
-  projectDetailState.wasWorkOpen = window.matchMedia("(max-width: 960px)").matches && !!(layout && layout.classList.contains("is-work-open"));
+  projectDetailState.wasWorkOpen = window.matchMedia("(max-width: 960px)").matches &&
+    !!(layout && layout.clientWidth > 0 && layout.scrollLeft / layout.clientWidth >= 0.5);
   projectDetailState.openProjectId = projectId;
   setActiveNav("work");
 
@@ -289,6 +317,7 @@ function openProjectDetailView(projectId) {
   if (projectDetailScroller) {
     projectDetailScroller.scrollTop = 0;
   }
+  destroyProjectScrollUI = initProjectScrollUI();
 }
 
 function closeProjectDetailView() {
@@ -298,6 +327,8 @@ function closeProjectDetailView() {
   const workScroller = document.querySelector(".work-panel .carousel");
 
   if (!stage) return;
+  destroyProjectScrollUI();
+  document.querySelector(".nav-back-to-list")?._cancelFade?.();
 
   stage.classList.remove("is-project-open");
 
@@ -307,6 +338,7 @@ function closeProjectDetailView() {
     } else {
       layout.classList.remove("is-work-open");
     }
+    layout.scrollTo({ left: projectDetailState.wasWorkOpen ? layout.clientWidth : 0, behavior: "instant" });
   }
 
   if (sidebarScroller) {
@@ -318,10 +350,144 @@ function closeProjectDetailView() {
   }
 
   projectDetailState.openProjectId = null;
-  updateSidebarActiveNav();
+  updateMobilePanelNavState();
+}
+
+function initProjectScrollUI() {
+  const view = document.querySelector(".project-detail-view");
+  const scroller = view?.querySelector(".project-detail-scroller");
+  const content = view?.querySelector(".project-detail-content");
+  if (!view || !scroller || !content) return () => {};
+
+  const desktop = window.matchMedia("(min-width: 961px)");
+  let stopDesktop = () => {};
+  const syncViewport = () => {
+    stopDesktop();
+    stopDesktop = () => {};
+    if (!desktop.matches) return;
+
+    const control = document.createElement("div");
+    control.className = "project-scroll-control";
+    const thumb = document.createElement("button");
+    thumb.className = "project-scroll-thumb";
+    thumb.type = "button";
+    thumb.setAttribute("role", "scrollbar");
+    thumb.setAttribute("aria-label", "Scroll project content after hero");
+    thumb.setAttribute("aria-controls", scroller.id);
+    thumb.setAttribute("aria-orientation", "vertical");
+    thumb.setAttribute("aria-valuemin", "0");
+    thumb.setAttribute("aria-valuemax", "100");
+    control.append(thumb);
+    const indicator = document.createElement("div");
+    indicator.className = "project-section-indicator";
+    indicator.textContent = "Overview";
+    view.append(control, indicator);
+
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    const markers = [...content.querySelectorAll("[data-project-section]")];
+    const labels = { overview: "Overview", details: "Details", gallery: "Gallery" };
+    const clamp = (value) => Math.max(0, Math.min(1, value));
+    let frame = null;
+    let dirty = true;
+    let minScroll = 0;
+    let maxScroll = 0;
+    let travel = 0;
+    let boundaries = [];
+    let drag = null;
+
+    const measure = () => {
+      const top = scroller.getBoundingClientRect().top;
+      boundaries = markers.map((element) => ({
+        top: element.getBoundingClientRect().top - top + scroller.scrollTop,
+        label: labels[element.dataset.projectSection]
+      }));
+      maxScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      minScroll = Math.min(maxScroll, boundaries[0]?.top ?? 0);
+      travel = Math.max(0, control.clientHeight - thumb.offsetHeight);
+      dirty = false;
+    };
+    const update = () => {
+      frame = null;
+      if (dirty) measure();
+      const range = maxScroll - minScroll;
+      const progress = range > 0 ? clamp((scroller.scrollTop - minScroll) / range) : 0;
+      thumb.style.top = `${progress * travel}px`;
+      thumb.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
+      thumb.setAttribute("aria-disabled", String(range <= 0));
+      const midpoint = scroller.scrollTop + scroller.clientHeight * 0.5;
+      let label = "Overview";
+      boundaries.forEach((section) => {
+        if (section.top <= midpoint) label = section.label;
+      });
+      if (indicator.textContent !== label) indicator.textContent = label;
+    };
+    const schedule = () => {
+      if (frame === null) frame = requestAnimationFrame(update);
+    };
+    const invalidate = () => { dirty = true; schedule(); };
+    const stopDrag = () => {
+      const id = drag?.id;
+      drag = null;
+      if (id !== undefined && thumb.hasPointerCapture(id)) thumb.releasePointerCapture(id);
+    };
+
+    thumb.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0 || !event.isPrimary) return;
+      measure();
+      drag = { id: event.pointerId, offset: event.clientY - thumb.getBoundingClientRect().top };
+      thumb.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      thumb.focus({ preventScroll: true });
+    }, options);
+    thumb.addEventListener("pointermove", (event) => {
+      if (!drag || drag.id !== event.pointerId) return;
+      if (dirty) measure();
+      const y = event.clientY - control.getBoundingClientRect().top - drag.offset;
+      const progress = travel > 0 ? clamp(y / travel) : 0;
+      scroller.scrollTop = minScroll + progress * (maxScroll - minScroll);
+      schedule();
+    }, options);
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((type) => {
+      thumb.addEventListener(type, stopDrag, options);
+    });
+    window.addEventListener("blur", stopDrag, options);
+    thumb.addEventListener("keydown", (event) => {
+      const steps = { ArrowDown: 40, ArrowUp: -40, PageDown: scroller.clientHeight, PageUp: -scroller.clientHeight };
+      if (!(event.key in steps) && event.key !== "Home" && event.key !== "End") return;
+      event.preventDefault();
+      if (dirty) measure();
+      const top = event.key === "Home" ? minScroll : event.key === "End" ? maxScroll
+        : Math.max(minScroll, scroller.scrollTop) + steps[event.key];
+      scroller.scrollTop = Math.max(minScroll, Math.min(maxScroll, top));
+      schedule();
+    }, options);
+    scroller.addEventListener("scroll", schedule, { ...options, passive: true });
+    content.addEventListener("load", invalidate, { ...options, capture: true });
+    const observer = new ResizeObserver(invalidate);
+    [content, scroller, ...markers].forEach((element) => observer.observe(element));
+    update();
+
+    stopDesktop = () => {
+      stopDrag();
+      controller.abort();
+      observer.disconnect();
+      if (frame !== null) cancelAnimationFrame(frame);
+      control.remove();
+      indicator.remove();
+    };
+  };
+  desktop.addEventListener("change", syncViewport);
+  syncViewport();
+  return () => {
+    desktop.removeEventListener("change", syncViewport);
+    stopDesktop();
+    stopDesktop = () => {};
+  };
 }
 
 function initProjectDetailView() {
+  initHeaderProjectBack();
   const carousel = document.querySelector(".work-panel .carousel");
 
   if (!carousel) return;
@@ -344,6 +510,37 @@ function initProjectDetailView() {
     event.preventDefault();
 
     openProjectDetailView(slide.dataset.project);
+  });
+}
+
+function initHeaderProjectBack() {
+  const button = document.querySelector(".nav-back-to-list");
+  if (!button) return;
+
+  button.addEventListener("click", () => {
+    if (!projectDetailState.openProjectId || window.matchMedia("(max-width: 960px)").matches) return;
+    const projectId = projectDetailState.openProjectId;
+    let timer;
+    const cleanup = () => {
+      clearTimeout(timer);
+      button.removeEventListener("transitionend", finish);
+      button.disabled = false;
+      delete button._cancelFade;
+    };
+    const finish = (event) => {
+      if (event && (event.target !== button || event.propertyName !== "opacity")) return;
+      cleanup();
+      if (projectDetailState.openProjectId === projectId) {
+        closeProjectDetailView();
+        document.querySelector(".work-toggle")?.focus({ preventScroll: true });
+      }
+    };
+    button._cancelFade = cleanup;
+    button.addEventListener("transitionend", finish);
+    button.disabled = true;
+    const duration = parseFloat(getComputedStyle(button).transitionDuration) * 1000;
+    if (!duration) finish();
+    else timer = setTimeout(finish, duration + 40);
   });
 }
 
@@ -923,19 +1120,28 @@ function initCustomScrollbars() {
 
 function setActiveNav(navName) {
   const links = document.querySelectorAll(".site-header .nav-link[data-nav]");
+  const isMobile = window.matchMedia("(max-width: 960px)").matches;
   // Clear other links first so even synchronous changes never create two actives.
   links.forEach((link) => {
     if (link.dataset.nav !== navName) link.classList.remove("is-active");
   });
   links.forEach((link) => {
     if (link.dataset.nav === navName) link.classList.add("is-active");
+    // Touch browsers can keep :hover on Work after a tap and subsequent swipe.
+    // On mobile, only the active link should retain the existing blue color.
+    if (isMobile && link.dataset.nav !== navName) {
+      link.style.setProperty("color", "var(--ink)");
+    } else {
+      link.style.removeProperty("color");
+    }
   });
 }
 
 function updateSidebarActiveNav() {
   const layout = document.querySelector(".content-layout");
   if (projectDetailState.openProjectId ||
-      (window.matchMedia("(max-width: 960px)").matches && layout?.classList.contains("is-work-open"))) {
+      (window.matchMedia("(max-width: 960px)").matches && layout?.clientWidth > 0 &&
+        layout.scrollLeft / layout.clientWidth >= 0.5)) {
     setActiveNav("work");
     return;
   }
@@ -959,252 +1165,115 @@ function updateSidebarActiveNav() {
   }
 }
 
+function updateMobilePanelNavState() {
+  const layout = document.querySelector(".content-layout");
+  if (layout && window.matchMedia("(max-width: 960px)").matches) {
+    const isOpen = layout.clientWidth > 0 && layout.scrollLeft / layout.clientWidth >= 0.5;
+    // Semantic state only: CSS snap and the browser own all panel movement.
+    layout.classList.toggle("is-work-open", isOpen);
+    document.querySelector(".work-toggle")?.setAttribute("aria-expanded", String(isOpen));
+  }
+  updateSidebarActiveNav();
+}
+
 function initMobileWorkPanel() {
   const layout = document.querySelector(".content-layout");
   const toggle = document.querySelector(".work-toggle");
-
   if (!layout || !toggle) return;
 
-  const setOpen = (isOpen, { fromSwipe = false } = {}) => {
-    if (!fromSwipe) cancelSwipe();
-    layout.classList.toggle("is-work-open", isOpen);
-    toggle.setAttribute("aria-expanded", String(isOpen));
-    if (isOpen) {
-      setActiveNav("work");
-    } else {
-      updateSidebarActiveNav();
-    }
-  };
-
+  const mobileQuery = window.matchMedia("(max-width: 960px)");
   const sidebar = document.querySelector(".sidebar");
   const sidebarLinks = document.querySelectorAll(".site-header [data-sidebar-target]");
-  const cancelSwipe = initMobilePanelSwipe(layout, setOpen);
   let navScrollRaf = null;
+  let resizeRaf = null;
+  let previousWidth = layout.clientWidth;
+  let wasMobile = mobileQuery.matches;
+  let pendingSidebarTarget = null;
+
+  const scrollSidebarToTarget = () => {
+    if (!pendingSidebarTarget || !sidebar) return;
+    const target = pendingSidebarTarget;
+    pendingSidebarTarget = null;
+    const top = target === sidebar ? 0 : sidebar.scrollTop +
+      target.getBoundingClientRect().top - sidebar.getBoundingClientRect().top;
+    sidebar.scrollTo({
+      top,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"
+    });
+  };
+
   const scheduleActiveUpdate = () => {
     if (navScrollRaf !== null) return;
     navScrollRaf = requestAnimationFrame(() => {
       navScrollRaf = null;
-      updateSidebarActiveNav();
+      if (resizeRaf === null) updateMobilePanelNavState();
     });
   };
+
+  const scrollToPanel = (isOpen) => {
+    if (!mobileQuery.matches) return;
+    layout.scrollTo({
+      left: isOpen ? layout.clientWidth : 0,
+      behavior: "auto"
+    });
+  };
+
+  // Observe native scrolling; never steer the horizontal position from here.
+  layout.addEventListener("scroll", () => {
+    if (mobileQuery.matches) scheduleActiveUpdate();
+  }, { passive: true });
+  layout.addEventListener("scrollend", () => {
+    if (!mobileQuery.matches || resizeRaf !== null) return;
+    updateMobilePanelNavState();
+    if (layout.scrollLeft < 1) scrollSidebarToTarget();
+    else pendingSidebarTarget = null;
+  }, { passive: true });
   sidebar?.addEventListener("scroll", scheduleActiveUpdate, { passive: true });
-  updateSidebarActiveNav();
 
   sidebarLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
       const target = sidebar?.querySelector(link.hash) || (link.hash === "#about" ? sidebar : null);
       if (!sidebar || !target) return;
-
       event.preventDefault();
       if (projectDetailState.openProjectId) closeProjectDetailView();
-      setOpen(false);
-      setActiveNav(link.dataset.nav);
-
-      requestAnimationFrame(() => {
-        const top = target === sidebar ? 0 : sidebar.scrollTop +
-          target.getBoundingClientRect().top - sidebar.getBoundingClientRect().top;
-        sidebar.scrollTo({ top, behavior: "smooth" });
-      });
+      pendingSidebarTarget = target;
+      scrollToPanel(false);
+      if (!mobileQuery.matches || layout.scrollLeft < 1) scrollSidebarToTarget();
     });
   });
 
   toggle.addEventListener("click", (event) => {
-    const wasProjectOpen = !!projectDetailState.openProjectId;
-    if (wasProjectOpen) closeProjectDetailView();
-    const isMobile = window.matchMedia("(max-width: 960px)").matches;
-
-    if (!isMobile) {
-      setActiveNav("work");
+    if (!mobileQuery.matches) {
+      event.preventDefault();
       return;
     }
-
+    if (projectDetailState.openProjectId) closeProjectDetailView();
+    pendingSidebarTarget = null;
     event.preventDefault();
-    setOpen(wasProjectOpen || !layout.classList.contains("is-work-open"));
+    scrollToPanel(true);
   });
 
-  window.addEventListener("resize", () => {
-    if (!window.matchMedia("(max-width: 960px)").matches) {
-      setOpen(false);
-    }
-    scheduleActiveUpdate();
-  });
-}
-
-function initMobilePanelSwipe(layout, setOpen) {
-  const mobileQuery = window.matchMedia("(max-width: 960px)");
-  const sidebarPanel = layout.querySelector(".sidebar-panel");
-  const workPanel = layout.querySelector(".work-panel");
-  if (!sidebarPanel || !workPanel) return () => {};
-
-  const panels = [sidebarPanel, workPanel];
-  let gesture = null;
-  let dragRaf = null;
-  let settleTimer = null;
-  let finishTransition = null;
-  let suppressClickUntil = 0;
-
-  function renderPosition(sidebarX, width) {
-    sidebarPanel.style.transform = `translate3d(${sidebarX}px, 0, 0)`;
-    workPanel.style.transform = `translate3d(${width + sidebarX}px, 0, 0)`;
-  }
-
-  function releaseCapture(id) {
-    if (id !== undefined && layout.hasPointerCapture(id)) layout.releasePointerCapture(id);
-  }
-
-  // Also used by header navigation and resize; never touches either scroller.
-  function cleanup() {
-    const id = gesture?.id;
-    gesture = null;
-    if (dragRaf !== null) cancelAnimationFrame(dragRaf);
-    dragRaf = null;
-    clearTimeout(settleTimer);
-    settleTimer = null;
-    if (finishTransition) workPanel.removeEventListener("transitionend", finishTransition);
-    finishTransition = null;
-    if (layout.classList.contains("is-swipe-dragging") || layout.classList.contains("is-swipe-settling")) {
-      layout.classList.add("is-swipe-dragging");
-      layout.classList.remove("is-swipe-settling");
-      panels.forEach((panel) => panel.style.removeProperty("transform"));
-      layout.style.removeProperty("--swipe-duration");
-      // Resolve the existing CSS state without animating a second time.
-      void sidebarPanel.offsetWidth;
-      layout.classList.remove("is-swipe-dragging");
-    }
-    releaseCapture(id);
-  }
-
-  function updatePosition(event) {
-    const dx = event.clientX - gesture.startX;
-    gesture.dragX = gesture.workOpen
-      ? Math.min(gesture.width, Math.max(0, dx))
-      : Math.max(-gesture.width, Math.min(0, dx));
-    const elapsed = event.timeStamp - gesture.lastTime;
-    if (event.clientX !== gesture.lastX && elapsed > 0) {
-      gesture.velocityX = (event.clientX - gesture.lastX) / elapsed;
-      gesture.lastX = event.clientX;
-      gesture.lastTime = event.timeStamp;
-    }
-  }
-
-  function settle(cancelled, event) {
-    if (!gesture) return;
-    if (!gesture.didHorizontalDrag) {
-      gesture = null;
-      return;
-    }
-    if (!cancelled) updatePosition(event);
-    const current = gesture;
-    gesture = null;
-    if (dragRaf !== null) cancelAnimationFrame(dragRaf);
-    dragRaf = null;
-    suppressClickUntil = performance.now() + 600;
-    releaseCapture(current.id);
-
-    const progress = Math.abs(current.dragX) / current.width;
-    // A held finger has zero release velocity, even after a fast initial move.
-    const velocity = event.timeStamp - current.lastTime <= 100 ? current.velocityX : 0;
-    const forwardVelocity = current.workOpen ? velocity : -velocity;
-    const commit = !cancelled && (progress >= 0.3 || (progress > 0 && forwardVelocity >= 0.5));
-    const targetOpen = commit ? !current.workOpen : current.workOpen;
-    const remaining = commit ? 1 - progress : progress;
-    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ? 0 : 120 + Math.max(0, Math.min(1, remaining)) * 160;
-
-    renderPosition((current.workOpen ? -current.width : 0) + current.dragX, current.width);
-    void sidebarPanel.offsetWidth;
-    layout.style.setProperty("--swipe-duration", `${duration}ms`);
-    layout.classList.remove("is-swipe-dragging");
-    layout.classList.add("is-swipe-settling");
-
-    finishTransition = (transitionEvent) => {
-      if (transitionEvent && (transitionEvent.target !== workPanel || transitionEvent.propertyName !== "transform")) return;
-      // Commit only at the endpoint. Keep transforms while the shared setter
-      // synchronizes the class, aria-expanded and the single active nav link.
-      layout.classList.add("is-swipe-dragging");
-      layout.classList.remove("is-swipe-settling");
-      if (commit) setOpen(targetOpen, { fromSwipe: true });
-      cleanup();
-    };
-    workPanel.addEventListener("transitionend", finishTransition);
-    renderPosition(targetOpen ? -current.width : 0, current.width);
-    // transitionend is absent for zero distance/reduced motion or a hidden tab.
-    settleTimer = setTimeout(() => finishTransition?.(), duration + 50);
-  }
-
-  layout.addEventListener("pointerdown", (event) => {
-    if (!mobileQuery.matches || event.pointerType !== "touch") return;
-    if (!event.isPrimary) {
-      settle(true, event);
-      return;
-    }
-    suppressClickUntil = 0;
-    if (projectDetailState.openProjectId || settleTimer !== null) return;
-    if (event.target.closest("button, input, textarea, select, [contenteditable], .scroll-ui")) return;
-    if (panels.some((panel) => panel.getAnimations().some((animation) => animation.playState === "running"))) return;
-    gesture = {
-      id: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      lastX: event.clientX,
-      startTime: event.timeStamp,
-      lastTime: event.timeStamp,
-      velocityX: 0,
-      dragX: 0,
-      width: layout.clientWidth,
-      workOpen: layout.classList.contains("is-work-open"),
-      didHorizontalDrag: false,
-    };
-  }, { passive: true });
-
-  layout.addEventListener("pointermove", (event) => {
-    if (!gesture || gesture.id !== event.pointerId) return;
-    if (projectDetailState.openProjectId) return cleanup();
-    if (!gesture.didHorizontalDrag) {
-      const dx = Math.abs(event.clientX - gesture.startX);
-      const dy = Math.abs(event.clientY - gesture.startY);
-      if (Math.max(dx, dy) < 8) return;
-      if (dy > dx) {
-        gesture = null;
-        return;
+  const alignPanelsForViewport = () => {
+    if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = null;
+      const isMobile = mobileQuery.matches;
+      const width = layout.clientWidth;
+      if (isMobile !== wasMobile || width !== previousWidth) {
+        // Preserve the semantic screen across breakpoints without animation.
+        const isOpen = layout.classList.contains("is-work-open");
+        layout.scrollTo({ left: isMobile && isOpen ? width : 0, behavior: "instant" });
+        wasMobile = isMobile;
+        previousWidth = width;
       }
-      if (dx <= dy * 1.2 || !gesture.width) return;
-      gesture.didHorizontalDrag = true;
-      layout.classList.add("is-swipe-dragging");
-      layout.setPointerCapture(event.pointerId);
-    }
-    updatePosition(event);
-    if (dragRaf === null) {
-      dragRaf = requestAnimationFrame(() => {
-        dragRaf = null;
-        if (gesture) renderPosition((gesture.workOpen ? -gesture.width : 0) + gesture.dragX, gesture.width);
-      });
-    }
-  }, { passive: true });
-
-  layout.addEventListener("pointerup", (event) => {
-    if (gesture?.id === event.pointerId) settle(false, event);
-  }, { passive: true });
-  const cancelGesture = (event) => {
-    if (gesture?.id === event.pointerId) settle(true, event);
+      toggle.setAttribute("aria-expanded", String(isMobile && layout.classList.contains("is-work-open")));
+      updateMobilePanelNavState();
+      if (!isMobile || layout.scrollLeft < 1) scrollSidebarToTarget();
+    });
   };
-  layout.addEventListener("pointercancel", cancelGesture, { passive: true });
-  layout.addEventListener("lostpointercapture", (event) => {
-    // Transferring implicit touch capture from a card to the layout also
-    // emits this event on the card; only losing our own capture cancels.
-    if (event.target === layout) cancelGesture(event);
-  }, { passive: true });
-  layout.addEventListener("click", (event) => {
-    if (event.detail === 0 || event.pointerType === "mouse" || performance.now() > suppressClickUntil) return;
-    event.preventDefault();
-    event.stopPropagation();
-    suppressClickUntil = 0;
-  }, { capture: true });
-
-  window.addEventListener("resize", cleanup);
-  window.addEventListener("blur", cleanup);
-  mobileQuery.addEventListener("change", cleanup);
-  return cleanup;
+  window.addEventListener("resize", alignPanelsForViewport);
+  mobileQuery.addEventListener("change", alignPanelsForViewport);
+  updateMobilePanelNavState();
 }
 
 function initMobileProjectOverlay() {
