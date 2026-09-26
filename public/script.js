@@ -965,7 +965,8 @@ function initMobileWorkPanel() {
 
   if (!layout || !toggle) return;
 
-  const setOpen = (isOpen) => {
+  const setOpen = (isOpen, { fromSwipe = false } = {}) => {
+    if (!fromSwipe) cancelSwipe();
     layout.classList.toggle("is-work-open", isOpen);
     toggle.setAttribute("aria-expanded", String(isOpen));
     if (isOpen) {
@@ -977,7 +978,7 @@ function initMobileWorkPanel() {
 
   const sidebar = document.querySelector(".sidebar");
   const sidebarLinks = document.querySelectorAll(".site-header [data-sidebar-target]");
-  initMobilePanelSwipe(layout, setOpen);
+  const cancelSwipe = initMobilePanelSwipe(layout, setOpen);
   let navScrollRaf = null;
   const scheduleActiveUpdate = () => {
     if (navScrollRaf !== null) return;
@@ -1031,70 +1032,179 @@ function initMobileWorkPanel() {
 
 function initMobilePanelSwipe(layout, setOpen) {
   const mobileQuery = window.matchMedia("(max-width: 960px)");
-  let controller;
+  const sidebarPanel = layout.querySelector(".sidebar-panel");
+  const workPanel = layout.querySelector(".work-panel");
+  if (!sidebarPanel || !workPanel) return () => {};
 
-  const updateListeners = () => {
-    controller?.abort();
-    if (!mobileQuery.matches) return;
+  const panels = [sidebarPanel, workPanel];
+  let gesture = null;
+  let dragRaf = null;
+  let settleTimer = null;
+  let finishTransition = null;
+  let suppressClickUntil = 0;
 
-    controller = new AbortController();
-    const options = { signal: controller.signal, passive: true };
-    let gesture = null;
-    let suppressClickUntil = 0;
-    const projectOpen = () => !!projectDetailState.openProjectId;
+  function renderPosition(sidebarX, width) {
+    sidebarPanel.style.transform = `translate3d(${sidebarX}px, 0, 0)`;
+    workPanel.style.transform = `translate3d(${width + sidebarX}px, 0, 0)`;
+  }
 
-    layout.addEventListener("pointerdown", (event) => {
-      suppressClickUntil = 0;
-      if (event.pointerType !== "touch") return;
-      if (!event.isPrimary || projectOpen()) {
+  function releaseCapture(id) {
+    if (id !== undefined && layout.hasPointerCapture(id)) layout.releasePointerCapture(id);
+  }
+
+  // Also used by header navigation and resize; never touches either scroller.
+  function cleanup() {
+    const id = gesture?.id;
+    gesture = null;
+    if (dragRaf !== null) cancelAnimationFrame(dragRaf);
+    dragRaf = null;
+    clearTimeout(settleTimer);
+    settleTimer = null;
+    if (finishTransition) workPanel.removeEventListener("transitionend", finishTransition);
+    finishTransition = null;
+    if (layout.classList.contains("is-swipe-dragging") || layout.classList.contains("is-swipe-settling")) {
+      layout.classList.add("is-swipe-dragging");
+      layout.classList.remove("is-swipe-settling");
+      panels.forEach((panel) => panel.style.removeProperty("transform"));
+      layout.style.removeProperty("--swipe-duration");
+      // Resolve the existing CSS state without animating a second time.
+      void sidebarPanel.offsetWidth;
+      layout.classList.remove("is-swipe-dragging");
+    }
+    releaseCapture(id);
+  }
+
+  function updatePosition(event) {
+    const dx = event.clientX - gesture.startX;
+    gesture.dragX = gesture.workOpen
+      ? Math.min(gesture.width, Math.max(0, dx))
+      : Math.max(-gesture.width, Math.min(0, dx));
+    const elapsed = event.timeStamp - gesture.lastTime;
+    if (event.clientX !== gesture.lastX && elapsed > 0) {
+      gesture.velocityX = (event.clientX - gesture.lastX) / elapsed;
+      gesture.lastX = event.clientX;
+      gesture.lastTime = event.timeStamp;
+    }
+  }
+
+  function settle(cancelled, event) {
+    if (!gesture) return;
+    if (!gesture.didHorizontalDrag) {
+      gesture = null;
+      return;
+    }
+    if (!cancelled) updatePosition(event);
+    const current = gesture;
+    gesture = null;
+    if (dragRaf !== null) cancelAnimationFrame(dragRaf);
+    dragRaf = null;
+    suppressClickUntil = performance.now() + 600;
+    releaseCapture(current.id);
+
+    const progress = Math.abs(current.dragX) / current.width;
+    // A held finger has zero release velocity, even after a fast initial move.
+    const velocity = event.timeStamp - current.lastTime <= 100 ? current.velocityX : 0;
+    const forwardVelocity = current.workOpen ? velocity : -velocity;
+    const commit = !cancelled && (progress >= 0.3 || (progress > 0 && forwardVelocity >= 0.5));
+    const targetOpen = commit ? !current.workOpen : current.workOpen;
+    const remaining = commit ? 1 - progress : progress;
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? 0 : 120 + Math.max(0, Math.min(1, remaining)) * 160;
+
+    renderPosition((current.workOpen ? -current.width : 0) + current.dragX, current.width);
+    void sidebarPanel.offsetWidth;
+    layout.style.setProperty("--swipe-duration", `${duration}ms`);
+    layout.classList.remove("is-swipe-dragging");
+    layout.classList.add("is-swipe-settling");
+
+    finishTransition = (transitionEvent) => {
+      if (transitionEvent && (transitionEvent.target !== workPanel || transitionEvent.propertyName !== "transform")) return;
+      // Commit only at the endpoint. Keep transforms while the shared setter
+      // synchronizes the class, aria-expanded and the single active nav link.
+      layout.classList.add("is-swipe-dragging");
+      layout.classList.remove("is-swipe-settling");
+      if (commit) setOpen(targetOpen, { fromSwipe: true });
+      cleanup();
+    };
+    workPanel.addEventListener("transitionend", finishTransition);
+    renderPosition(targetOpen ? -current.width : 0, current.width);
+    // transitionend is absent for zero distance/reduced motion or a hidden tab.
+    settleTimer = setTimeout(() => finishTransition?.(), duration + 50);
+  }
+
+  layout.addEventListener("pointerdown", (event) => {
+    if (!mobileQuery.matches || event.pointerType !== "touch") return;
+    if (!event.isPrimary) {
+      settle(true, event);
+      return;
+    }
+    suppressClickUntil = 0;
+    if (projectDetailState.openProjectId || settleTimer !== null) return;
+    if (event.target.closest("button, input, textarea, select, [contenteditable], .scroll-ui")) return;
+    if (panels.some((panel) => panel.getAnimations().some((animation) => animation.playState === "running"))) return;
+    gesture = {
+      id: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      lastX: event.clientX,
+      startTime: event.timeStamp,
+      lastTime: event.timeStamp,
+      velocityX: 0,
+      dragX: 0,
+      width: layout.clientWidth,
+      workOpen: layout.classList.contains("is-work-open"),
+      didHorizontalDrag: false,
+    };
+  }, { passive: true });
+
+  layout.addEventListener("pointermove", (event) => {
+    if (!gesture || gesture.id !== event.pointerId) return;
+    if (projectDetailState.openProjectId) return cleanup();
+    if (!gesture.didHorizontalDrag) {
+      const dx = Math.abs(event.clientX - gesture.startX);
+      const dy = Math.abs(event.clientY - gesture.startY);
+      if (Math.max(dx, dy) < 8) return;
+      if (dy > dx) {
         gesture = null;
         return;
       }
-      if (event.target.closest("a, button, input, textarea, select, [contenteditable], .scroll-ui")) return;
-      gesture = {
-        id: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        workOpen: layout.classList.contains("is-work-open"),
-      };
-    }, options);
+      if (dx <= dy * 1.2 || !gesture.width) return;
+      gesture.didHorizontalDrag = true;
+      layout.classList.add("is-swipe-dragging");
+      layout.setPointerCapture(event.pointerId);
+    }
+    updatePosition(event);
+    if (dragRaf === null) {
+      dragRaf = requestAnimationFrame(() => {
+        dragRaf = null;
+        if (gesture) renderPosition((gesture.workOpen ? -gesture.width : 0) + gesture.dragX, gesture.width);
+      });
+    }
+  }, { passive: true });
 
-    layout.addEventListener("pointermove", (event) => {
-      if (!gesture || gesture.id !== event.pointerId) return;
-      const dx = Math.abs(event.clientX - gesture.x);
-      const dy = Math.abs(event.clientY - gesture.y);
-      // Once a gesture becomes vertical/diagonal, leave it to the scroller.
-      if (dy > 10 && dx <= dy * 1.3) gesture = null;
-    }, options);
-
-    layout.addEventListener("pointerup", (event) => {
-      if (!gesture || gesture.id !== event.pointerId) return;
-      const start = gesture;
-      gesture = null;
-      if (projectOpen() || start.workOpen !== layout.classList.contains("is-work-open")) return;
-      const dx = event.clientX - start.x;
-      const dy = event.clientY - start.y;
-      const threshold = Math.min(80, window.innerWidth * 0.15);
-      if (Math.abs(dx) < threshold || Math.abs(dx) <= Math.abs(dy) * 1.3) return;
-
-      // A horizontal drag on a card must never become a delegated project tap.
-      suppressClickUntil = performance.now() + 600;
-      if ((!start.workOpen && dx < 0) || (start.workOpen && dx > 0)) {
-        setOpen(!start.workOpen);
-      }
-    }, options);
-
-    layout.addEventListener("pointercancel", () => { gesture = null; }, options);
-    layout.addEventListener("click", (event) => {
-      if (event.detail === 0 || event.pointerType === "mouse" || performance.now() > suppressClickUntil) return;
-      event.preventDefault();
-      event.stopPropagation();
-      suppressClickUntil = 0;
-    }, { signal: controller.signal, capture: true });
+  layout.addEventListener("pointerup", (event) => {
+    if (gesture?.id === event.pointerId) settle(false, event);
+  }, { passive: true });
+  const cancelGesture = (event) => {
+    if (gesture?.id === event.pointerId) settle(true, event);
   };
+  layout.addEventListener("pointercancel", cancelGesture, { passive: true });
+  layout.addEventListener("lostpointercapture", (event) => {
+    // Transferring implicit touch capture from a card to the layout also
+    // emits this event on the card; only losing our own capture cancels.
+    if (event.target === layout) cancelGesture(event);
+  }, { passive: true });
+  layout.addEventListener("click", (event) => {
+    if (event.detail === 0 || event.pointerType === "mouse" || performance.now() > suppressClickUntil) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClickUntil = 0;
+  }, { capture: true });
 
-  mobileQuery.addEventListener("change", updateListeners);
-  updateListeners();
+  window.addEventListener("resize", cleanup);
+  window.addEventListener("blur", cleanup);
+  mobileQuery.addEventListener("change", cleanup);
+  return cleanup;
 }
 
 function initMobileProjectOverlay() {
