@@ -2,6 +2,20 @@ const basePath = document.body.dataset.basePath || "/";
 
 const projectDefinitions = {
   cogs: {
+    leadImage: { src: `${basePath}images/Project_img/Cogs_1.jpg`, layout: "full" },
+    gallery: [
+      { src: `${basePath}images/Project_img/Cogs_2.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_3.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_4.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_5.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_6.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_7.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_8.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_9.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_10.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_11.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Cogs_12.jpg`, layout: "full" }
+    ],
     title: "COGS Cycling Community",
     category: "Brand identity",
     hero: `${basePath}images/cogs.png`,
@@ -15,17 +29,30 @@ const projectDefinitions = {
     sections: [
       { type: "text", eyebrow: "Design task", text: "Build a versatile brand that feels premium, contemporary, and rooted in the energy of urban cycling culture while staying memorable across print, motion, and digital outputs." },
       { type: "text", eyebrow: "Solution", text: "The identity balances a confident wordmark, bold editorial rhythm, and a modular system that supports both community messaging and product storytelling." },
-      { type: "text", eyebrow: "Design system", text: "A simple palette, expressive typography, and repeatable asset language produce a system that scales cleanly from jerseys to social graphics, campaign posters, and event materials." },
-      { type: "image", src: `${basePath}images/cogs.png`, alt: "COGS Cycling Community identity application" },
-      { type: "grid", items: [
-        { label: "Typography", value: "Bold, condensed wordmarks paired with editorial spacing for maximum clarity and energy." },
-        { label: "Brand assets", value: "The system combines logotype, badge work, and flexible campaign templates to support everyday club communications." },
-        { label: "Applications", value: "From poster systems to digital touchpoints, the design remains visually consistent without feeling rigid." },
-        { label: "Atmosphere", value: "A sharp blue palette and confident geometry create a sense of motion, trust, and identity-driven momentum." }
-      ] }
+      { type: "text", eyebrow: "Design system", text: "A simple palette, expressive typography, and repeatable asset language produce a system that scales cleanly from jerseys to social graphics, campaign posters, and event materials." }
     ]
   },
   kenya: {
+    leadImage: { src: `${basePath}images/Project_img/Coil_1.jpg`, layout: "full" },
+    gallery: [
+      { src: `${basePath}images/Project_img/Coil_2_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_3_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_4.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_5.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_6.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_7.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_8.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_9.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_10_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_11_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_12_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_13_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_14.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_15_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_16_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Coil_17.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Coil_18.jpg`, layout: "full" }
+    ],
     title: "COIL Coffee",
     category: "Packaging design",
     hero: `${basePath}images/kenya-coffee.png`,
@@ -38,11 +65,23 @@ const projectDefinitions = {
     overview: "COIL Coffee packaging brings the terroir and craft of Kenyan coffee into a refined retail language built for premium shelf presence.",
     sections: [
       { type: "text", eyebrow: "Design task", text: "Create a packaging system that feels premium, traceable, and globally legible while celebrating the origin story of the coffee." },
-      { type: "text", eyebrow: "Solution", text: "The system balances clarity, warmth, and regional identity through material cues, confident typography, and a higher-end product narrative." },
-      { type: "image", src: `${basePath}images/kenya-coffee.png`, alt: "COIL Coffee packaging detail" }
+      { type: "text", eyebrow: "Solution", text: "The system balances clarity, warmth, and regional identity through material cues, confident typography, and a higher-end product narrative." }
     ]
   },
   beincrypto: {
+    leadImage: { src: `${basePath}images/Project_img/Beincrypto_1.jpg`, layout: "full" },
+    gallery: [
+      { src: `${basePath}images/Project_img/Beincrypto_2.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Beincrypto_3_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Beincrypto_4_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Beincrypto_5.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Beincrypto_6.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Beincrypto_7.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Beincrypto_8.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Beincrypto_9.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Beincrypto_10_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Beincrypto_11_gr.jpg`, layout: "grid" }
+    ],
     title: "BeInCrypto Awards 2026",
     category: "Campaign identity",
     hero: `${basePath}images/beincrypto.png`,
@@ -55,11 +94,19 @@ const projectDefinitions = {
     overview: "An outdoor campaign identity designed to spotlight the event with strong visibility, premium pacing, and bold digital-first communication.",
     sections: [
       { type: "text", eyebrow: "Design task", text: "Structure a clean yet high-energy campaign system that can carry a large event narrative across multiple formats and touchpoints." },
-      { type: "text", eyebrow: "Solution", text: "The visual direction uses strong modular blocks, precise hierarchy, and a high-contrast palette to keep the campaign immediate and professional." },
-      { type: "image", src: `${basePath}images/beincrypto.png`, alt: "BeInCrypto Awards 2026 campaign imagery" }
+      { type: "text", eyebrow: "Solution", text: "The visual direction uses strong modular blocks, precise hierarchy, and a high-contrast palette to keep the campaign immediate and professional." }
     ]
   },
   heineken: {
+    leadImage: { src: `${basePath}images/Project_img/Heineken_case_1.jpg`, layout: "full" },
+    gallery: [
+      { src: `${basePath}images/Project_img/Heineken_case_2.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Heineken_case_3.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Heineken_case_4.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Heineken_case_5.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Heineken_case_6.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Heineken_case_7.jpg`, layout: "full" }
+    ],
     title: "Heineken × Formula 1",
     category: "Experiential kit",
     hero: `${basePath}images/heineken.png`,
@@ -72,11 +119,26 @@ const projectDefinitions = {
     overview: "A kits-of-parts experiential direction built to support event presence, creator moments, and premium brand storytelling at the intersection of sport and culture.",
     sections: [
       { type: "text", eyebrow: "Design task", text: "Develop a compact yet premium kit that communicates speed, design discipline, and hospitality across experiential moments." },
-      { type: "text", eyebrow: "Solution", text: "Clear modular layouts, precise product shots, and a strong visual cadence create a polished, fast-moving brand language for the event environment." },
-      { type: "image", src: `${basePath}images/heineken.png`, alt: "Heineken Formula 1 kit" }
+      { type: "text", eyebrow: "Solution", text: "Clear modular layouts, precise product shots, and a strong visual cadence create a polished, fast-moving brand language for the event environment." }
     ]
   },
   moretti: {
+    leadImage: { src: `${basePath}images/Project_img/Birra_1.jpg`, layout: "full" },
+    gallery: [
+      { src: `${basePath}images/Project_img/Birra_2.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Birra_3.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Birra_4.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Birra_5_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_6_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_7.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Birra_8.jpg`, layout: "full" },
+      { src: `${basePath}images/Project_img/Birra_9_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_10_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_11_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_12_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_13_gr.jpg`, layout: "grid" },
+      { src: `${basePath}images/Project_img/Birra_14_gr.jpg`, layout: "grid" }
+    ],
     title: "Birra Moretti Chalice",
     category: "Packaging design",
     hero: `${basePath}images/moretti.png`,
@@ -89,8 +151,7 @@ const projectDefinitions = {
     overview: "A premium chalice packaging concept built around ritual, craft, and celebratory cues while staying rooted in a recognizable premium beverage culture.",
     sections: [
       { type: "text", eyebrow: "Design task", text: "Translate the product story into a premium object with a memorable silhouette, tactile presence, and a distinct brand voice." },
-      { type: "text", eyebrow: "Solution", text: "The design uses a simplified packaging system with elevated finishes and a warm, celebratory visual language that feels premium without becoming heavy." },
-      { type: "image", src: `${basePath}images/moretti.png`, alt: "Birra Moretti chalice packaging design" }
+      { type: "text", eyebrow: "Solution", text: "The design uses a simplified packaging system with elevated finishes and a warm, celebratory visual language that feels premium without becoming heavy." }
     ]
   }
 };
@@ -117,30 +178,21 @@ function renderProjectSection(section) {
   if (section.type === "image") {
     return `
       <figure class="project-block project-image">
-        <img src="${section.src}" alt="${section.alt || "Project image"}" />
+        <img src="${section.src}" alt="${section.alt || "Project image"}" loading="lazy" />
         ${section.caption ? `<figcaption>${section.caption}</figcaption>` : ""}
       </figure>
     `;
   }
 
-  if (section.type === "grid") {
-    const items = (section.items || []).map((item) => `
-      <div class="project-grid-item">
-        <strong>${item.label}</strong>
-        <p>${item.value}</p>
-      </div>
-    `).join("");
-
-    return `
-      <section class="project-block project-grid">
-        <div class="project-grid-items">
-          ${items}
-        </div>
-      </section>
-    `;
-  }
-
   return "";
+}
+
+function renderProjectGallery(images = [], title = "Project") {
+  return images.map((image, index) => `
+    <figure class="project-gallery-item ${image.layout === "full" ? "is-full" : "is-grid"}">
+      <img src="${image.src}" alt="${image.alt || title + ' project image ' + (index + 2)}" loading="lazy" />
+    </figure>
+  `).join("");
 }
 
 function renderProjectDetail(projectId) {
@@ -202,7 +254,11 @@ function renderProjectDetail(projectId) {
         <h2 class="project-section-title">OVERVIEW</h2>
         <p>${project.overview}</p>
       </section>
+      ${renderProjectSection({ type: "image", ...project.leadImage, alt: project.title + " project image 1" })}
       ${sections}
+      <div class="project-block project-gallery">
+        ${renderProjectGallery(project.gallery, project.title)}
+      </div>
     </article>
   `;
 

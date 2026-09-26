@@ -287,7 +287,7 @@ a {
 .project-meta,
 .project-overview,
 .project-text,
-.project-grid {
+.project-gallery {
   width: min(100%, var(--project-content-width));
   max-width: var(--project-content-width);
   margin-left: auto;
@@ -323,8 +323,7 @@ a {
 }
 
 .project-overview p,
-.project-text p,
-.project-grid-item p {
+.project-text p {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.7;
@@ -333,8 +332,7 @@ a {
 }
 
 .project-overview,
-.project-text,
-.project-grid {
+.project-text {
   padding-top: 60px;
 }
 
@@ -343,29 +341,28 @@ a {
   gap: 12px;
 }
 
-.project-grid {
-  padding-bottom: 36px;
-}
-
-.project-grid-items {
+.project-gallery {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 40px;
+  gap: var(--gap);
+  align-items: start;
+  padding-top: 48px;
 }
 
-.project-grid-item {
-  padding-top: 22px;
-  border-top: 1px solid rgba(17, 17, 17, 0.18);
+.project-gallery-item {
+  min-width: 0;
+  margin: 0;
 }
 
-.project-grid-item strong {
+.project-gallery-item.is-full {
+  grid-column: 1 / -1;
+}
+
+.project-gallery-item img {
   display: block;
-  margin-bottom: 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--blue);
+  width: 100%;
+  height: auto;
+  max-width: 100%;
 }
 
 .project-image {
@@ -405,10 +402,25 @@ a {
 }
 
 @media (max-width: 960px) {
+  .project-gallery {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .project-gallery-item,
+  .project-gallery-item.is-full,
+  .project-gallery-item.is-grid {
+    width: 100%;
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+
   .project-meta,
   .project-overview,
-  .project-text,
-  .project-grid {
+  .project-text {
     width: calc(100% - 36px);
     max-width: none;
     margin-left: auto;
@@ -447,8 +459,7 @@ a {
 
   .project-meta,
   .project-overview,
-  .project-text,
-  .project-grid {
+  .project-text {
     width: calc(100% - 36px);
     max-width: none;
     margin-left: auto;
@@ -457,9 +468,6 @@ a {
     padding-right: 0;
   }
 
-  .project-grid-items {
-    grid-template-columns: 1fr;
-  }
 }
 
 .sidebar {
@@ -569,7 +577,7 @@ a {
   width: 100%;
   min-width: 0;
   padding: 7px clamp(6px, 2cqi, 12px);
-  font-size: clamp(0.55rem, 2.4cqi, 1rem);
+  font-size: clamp(0.6rem, 2.6cqi, 1.08rem);
   background: #fff;
   color: var(--blue);
   white-space: nowrap;
@@ -577,7 +585,7 @@ a {
 
 .brand-status-label {
   font-family: inherit;
-  font-size: clamp(0.5rem, 2.15cqi, 0.9rem);
+  font-size: clamp(0.54rem, 2.32cqi, 0.97rem);
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.03em;
@@ -1354,11 +1362,11 @@ a {
 
   .brand-status {
     padding: 7px 10px;
-    font-size: 0.68rem;
+    font-size: 0.74rem;
   }
 
   .brand-status-label {
-    font-size: 0.62rem;
+    font-size: 0.67rem;
   }
 
   @container brand-card (max-width: 400px) {
