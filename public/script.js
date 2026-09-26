@@ -281,6 +281,7 @@ function openProjectDetailView(projectId) {
   projectDetailState.savedWorkTop = workScroller ? workScroller.scrollTop : 0;
   projectDetailState.wasWorkOpen = window.matchMedia("(max-width: 960px)").matches && !!(layout && layout.classList.contains("is-work-open"));
   projectDetailState.openProjectId = projectId;
+  setActiveNav("work");
 
   renderProjectDetail(projectId);
   stage.classList.add("is-project-open");
@@ -317,6 +318,7 @@ function closeProjectDetailView() {
   }
 
   projectDetailState.openProjectId = null;
+  updateSidebarActiveNav();
 }
 
 function initProjectDetailView() {
@@ -919,6 +921,44 @@ function initCustomScrollbars() {
   setupWorkCarouselLifecycle();
 }
 
+function setActiveNav(navName) {
+  const links = document.querySelectorAll(".site-header .nav-link[data-nav]");
+  // Clear other links first so even synchronous changes never create two actives.
+  links.forEach((link) => {
+    if (link.dataset.nav !== navName) link.classList.remove("is-active");
+  });
+  links.forEach((link) => {
+    if (link.dataset.nav === navName) link.classList.add("is-active");
+  });
+}
+
+function updateSidebarActiveNav() {
+  const layout = document.querySelector(".content-layout");
+  if (projectDetailState.openProjectId ||
+      (window.matchMedia("(max-width: 960px)").matches && layout?.classList.contains("is-work-open"))) {
+    setActiveNav("work");
+    return;
+  }
+
+  const sidebar = document.querySelector(".sidebar");
+  const skills = sidebar?.querySelector(".what-i-do");
+  const contacts = sidebar?.querySelector(".footer");
+  if (!sidebar || !skills || !contacts) return;
+
+  const sidebarTop = sidebar.getBoundingClientRect().top;
+  const topInsideSidebar = (element) => sidebar.scrollTop + element.getBoundingClientRect().top - sidebarTop;
+  const activationLine = sidebar.scrollTop + sidebar.clientHeight * 0.28;
+  const distanceFromBottom = sidebar.scrollHeight - sidebar.scrollTop - sidebar.clientHeight;
+
+  if (distanceFromBottom <= 20 || activationLine >= topInsideSidebar(contacts)) {
+    setActiveNav("contacts");
+  } else if (activationLine >= topInsideSidebar(skills)) {
+    setActiveNav("skills");
+  } else {
+    setActiveNav("about");
+  }
+}
+
 function initMobileWorkPanel() {
   const layout = document.querySelector(".content-layout");
   const toggle = document.querySelector(".work-toggle");
@@ -928,25 +968,133 @@ function initMobileWorkPanel() {
   const setOpen = (isOpen) => {
     layout.classList.toggle("is-work-open", isOpen);
     toggle.setAttribute("aria-expanded", String(isOpen));
-    toggle.classList.toggle("is-active", isOpen);
+    if (isOpen) {
+      setActiveNav("work");
+    } else {
+      updateSidebarActiveNav();
+    }
   };
 
+  const sidebar = document.querySelector(".sidebar");
+  const sidebarLinks = document.querySelectorAll(".site-header [data-sidebar-target]");
+  initMobilePanelSwipe(layout, setOpen);
+  let navScrollRaf = null;
+  const scheduleActiveUpdate = () => {
+    if (navScrollRaf !== null) return;
+    navScrollRaf = requestAnimationFrame(() => {
+      navScrollRaf = null;
+      updateSidebarActiveNav();
+    });
+  };
+  sidebar?.addEventListener("scroll", scheduleActiveUpdate, { passive: true });
+  updateSidebarActiveNav();
+
+  sidebarLinks.forEach((link) => {
+    link.addEventListener("click", (event) => {
+      const target = sidebar?.querySelector(link.hash) || (link.hash === "#about" ? sidebar : null);
+      if (!sidebar || !target) return;
+
+      event.preventDefault();
+      if (projectDetailState.openProjectId) closeProjectDetailView();
+      setOpen(false);
+      setActiveNav(link.dataset.nav);
+
+      requestAnimationFrame(() => {
+        const top = target === sidebar ? 0 : sidebar.scrollTop +
+          target.getBoundingClientRect().top - sidebar.getBoundingClientRect().top;
+        sidebar.scrollTo({ top, behavior: "smooth" });
+      });
+    });
+  });
+
   toggle.addEventListener("click", (event) => {
+    const wasProjectOpen = !!projectDetailState.openProjectId;
+    if (wasProjectOpen) closeProjectDetailView();
     const isMobile = window.matchMedia("(max-width: 960px)").matches;
 
     if (!isMobile) {
+      setActiveNav("work");
       return;
     }
 
     event.preventDefault();
-    setOpen(!layout.classList.contains("is-work-open"));
+    setOpen(wasProjectOpen || !layout.classList.contains("is-work-open"));
   });
 
   window.addEventListener("resize", () => {
     if (!window.matchMedia("(max-width: 960px)").matches) {
       setOpen(false);
     }
+    scheduleActiveUpdate();
   });
+}
+
+function initMobilePanelSwipe(layout, setOpen) {
+  const mobileQuery = window.matchMedia("(max-width: 960px)");
+  let controller;
+
+  const updateListeners = () => {
+    controller?.abort();
+    if (!mobileQuery.matches) return;
+
+    controller = new AbortController();
+    const options = { signal: controller.signal, passive: true };
+    let gesture = null;
+    let suppressClickUntil = 0;
+    const projectOpen = () => !!projectDetailState.openProjectId;
+
+    layout.addEventListener("pointerdown", (event) => {
+      suppressClickUntil = 0;
+      if (event.pointerType !== "touch") return;
+      if (!event.isPrimary || projectOpen()) {
+        gesture = null;
+        return;
+      }
+      if (event.target.closest("a, button, input, textarea, select, [contenteditable], .scroll-ui")) return;
+      gesture = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        workOpen: layout.classList.contains("is-work-open"),
+      };
+    }, options);
+
+    layout.addEventListener("pointermove", (event) => {
+      if (!gesture || gesture.id !== event.pointerId) return;
+      const dx = Math.abs(event.clientX - gesture.x);
+      const dy = Math.abs(event.clientY - gesture.y);
+      // Once a gesture becomes vertical/diagonal, leave it to the scroller.
+      if (dy > 10 && dx <= dy * 1.3) gesture = null;
+    }, options);
+
+    layout.addEventListener("pointerup", (event) => {
+      if (!gesture || gesture.id !== event.pointerId) return;
+      const start = gesture;
+      gesture = null;
+      if (projectOpen() || start.workOpen !== layout.classList.contains("is-work-open")) return;
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      const threshold = Math.min(80, window.innerWidth * 0.15);
+      if (Math.abs(dx) < threshold || Math.abs(dx) <= Math.abs(dy) * 1.3) return;
+
+      // A horizontal drag on a card must never become a delegated project tap.
+      suppressClickUntil = performance.now() + 600;
+      if ((!start.workOpen && dx < 0) || (start.workOpen && dx > 0)) {
+        setOpen(!start.workOpen);
+      }
+    }, options);
+
+    layout.addEventListener("pointercancel", () => { gesture = null; }, options);
+    layout.addEventListener("click", (event) => {
+      if (event.detail === 0 || event.pointerType === "mouse" || performance.now() > suppressClickUntil) return;
+      event.preventDefault();
+      event.stopPropagation();
+      suppressClickUntil = 0;
+    }, { signal: controller.signal, capture: true });
+  };
+
+  mobileQuery.addEventListener("change", updateListeners);
+  updateListeners();
 }
 
 function initMobileProjectOverlay() {
@@ -990,10 +1138,32 @@ function initMobileProjectOverlay() {
   window.addEventListener("resize", updateTopSlide);
 }
 
+function initNavDotSpread() {
+  const spread = 0.12;
+
+  document.querySelectorAll(".site-header .nav-svg svg").forEach((svg) => {
+    const { x, y, width, height } = svg.viewBox.baseVal;
+    const centerX = x + width / 2;
+    const centerY = y + height / 2;
+
+    svg.querySelectorAll("[data-nav-dot]").forEach((dot) => {
+      const box = dot.getBBox();
+      const dx = (box.x + box.width / 2 - centerX) * spread;
+      const dy = (box.y + box.height / 2 - centerY) * spread;
+      // CSS translations on SVG geometry use SVG user units. The SVG viewport
+      // maps them to screen pixels, including after responsive resizing.
+      // Multiplying by the rendered/viewBox ratio here would apply it twice.
+      dot.style.setProperty("--nav-dot-x", `${dx}px`);
+      dot.style.setProperty("--nav-dot-y", `${dy}px`);
+    });
+  });
+}
+
 if (document.readyState === "loading") {
   document.addEventListener(
     "DOMContentLoaded",
     () => {
+      initNavDotSpread();
       initCustomScrollbars();
       initProjectDetailView();
       initMobileWorkPanel();
@@ -1001,6 +1171,7 @@ if (document.readyState === "loading") {
     }
   );
 } else {
+  initNavDotSpread();
   initCustomScrollbars();
   initProjectDetailView();
   initMobileWorkPanel();

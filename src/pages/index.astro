@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import NavDotIcon from "../components/NavDotIcon.astro";
 
 const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
 ---
@@ -22,18 +23,26 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
     <div class="page">
       <header class="site-header">
         <nav class="nav" aria-label="Primary">
-          <a class="nav-link is-active" href="#top">Home</a>
+          <a class="nav-link is-active" href="#about" data-nav="about" data-sidebar-target aria-label="About">
+            <NavDotIcon name="about" />
+          </a>
+          <a class="nav-link" href="#skills" data-nav="skills" data-sidebar-target aria-label="Skills">
+            <NavDotIcon name="skills" />
+          </a>
+          <a class="nav-link" href="#contact" data-nav="contacts" data-sidebar-target aria-label="Contacts">
+            <NavDotIcon name="contacts" />
+          </a>
           <a
-            class="nav-link work-toggle"
+            class="nav-link nav-link-work work-toggle"
+            data-nav="work"
             href="#work"
             data-panel-toggle="work-panel"
             aria-controls="work-panel"
             aria-expanded="false"
+            aria-label="Work"
           >
-            Work
+            <NavDotIcon name="work" />
           </a>
-          <a class="nav-link" href="#about">About</a>
-          <a class="nav-link" href="#contact">Contacts</a>
         </nav>
       </header>
 
@@ -42,7 +51,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
           <div class="content-layout">
         <!-- LEFT COLUMN -->
         <div class="scroll-panel sidebar-panel">
-          <aside class="sidebar">
+          <aside class="sidebar" id="about">
             <div class="brand-block">
               <div class="brand-main">
                 <a
@@ -79,7 +88,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
               </div>
             </div>
 
-            <section class="bio" id="about">
+            <section class="bio">
               <h2 class="eyebrow">Bio</h2>
 
               <p>
@@ -150,7 +159,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
               <span></span>
             </div>
 
-            <section class="what-i-do" aria-label="What I do">
+            <section class="what-i-do" id="skills" aria-label="What I do">
               <h2 class="what-i-do-title">What I do</h2>
 
               <article class="service-item">

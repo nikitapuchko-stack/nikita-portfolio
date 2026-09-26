@@ -85,6 +85,58 @@ a {
   transition: color 0.2s ease;
 }
 
+.nav-svg {
+  display: block;
+  /* Fit all four aspect ratios plus three 32px gaps within the 38% sidebar. */
+  height: min(clamp(19px, 1.7vw, 25.5px), calc(1.93vw - 5.66px));
+  width: auto;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.nav-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: currentColor;
+}
+
+.nav-svg [data-nav-dot],
+.nav-link.is-active [data-nav-dot] {
+  transform: translate(0, 0);
+}
+
+@media (min-width: 961px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .nav-svg [data-nav-dot] {
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .nav-link:not(.is-active):hover [data-nav-dot] {
+    transform: translate(var(--nav-dot-x, 0px), var(--nav-dot-y, 0px));
+  }
+}
+
+.nav-svg-about {
+  aspect-ratio: 261.74 / 61.57;
+}
+
+.nav-svg-skills {
+  aspect-ratio: 315.85 / 61.57;
+}
+
+.nav-svg-contacts {
+  aspect-ratio: 425.24 / 61.57;
+}
+
+.nav-svg-work {
+  aspect-ratio: 208.47 / 61.57;
+}
+
+.nav-link-work {
+  color: #b8b8b8;
+}
+
 .nav-link:hover {
   color: var(--blue);
   background: transparent;
@@ -384,6 +436,10 @@ a {
 }
 
 @media (min-width: 961px) {
+  .nav-link {
+    min-height: clamp(22px, 2vw, 30px);
+  }
+
   .project-image {
     width: min(100%, var(--project-content-width));
     max-width: var(--project-content-width);
@@ -402,6 +458,19 @@ a {
 }
 
 @media (max-width: 960px) {
+  .sidebar,
+  .work-panel .carousel {
+    touch-action: pan-y pinch-zoom;
+  }
+
+  .nav-svg {
+    height: clamp(12px, 4vw, 17px);
+  }
+
+  .nav-link-work {
+    color: var(--ink);
+  }
+
   .project-gallery {
     width: 100%;
     max-width: none;
@@ -483,7 +552,7 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
 
-  padding: 0 24px 4px 4px;
+  padding: 0 24px 4px 0;
 }
 
 /* Prevent sidebar content from shrinking */
@@ -498,7 +567,7 @@ a {
   display: flex;
   flex-direction: column;
   position: relative;
-  margin-top: 32px;
+  margin-top: 0;
   margin-bottom: 64px;
   background: var(--blue);
   border-radius: 0;
@@ -1179,10 +1248,11 @@ a {
   .site-header {
     position: relative;
     z-index: 30;
+    margin-inline: -4px;
   }
 
   .nav {
-    gap: 18px;
+    gap: clamp(12px, 3vw, 18px);
     padding: 14px 0 16px;
     overflow-x: auto;
     scrollbar-width: none;
@@ -1333,7 +1403,6 @@ a {
   }
 
   .brand-block {
-    margin-top: 24px;
     margin-bottom: 38px;
   }
 

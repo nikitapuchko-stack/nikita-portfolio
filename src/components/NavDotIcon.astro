@@ -1,0 +1,23 @@
+---
+import about from "../../public/images/Header buttons/About.svg?raw";
+import skills from "../../public/images/Header buttons/Skills.svg?raw";
+import contacts from "../../public/images/Header buttons/Contacts.svg?raw";
+import work from "../../public/images/Header buttons/Work.svg?raw";
+
+interface Props {
+  name: "about" | "skills" | "contacts" | "work";
+}
+
+const { name } = Astro.props;
+const source = { about, skills, contacts, work }[name];
+const viewBox = source.match(/viewBox="([^"]+)"/)![1];
+// These local assets consist entirely of individual rounded rect dots.
+// Keep their geometry; omit the export's shared IDs, classes and color styles.
+const dots = [...source.matchAll(/<rect\b[^>]*\/>/g)]
+  .map(([rect]) => rect.replace(/\sclass="[^"]*"/g, "").replace("<rect", "<rect data-nav-dot"))
+  .join("");
+---
+
+<span class={`nav-svg nav-svg-${name}`} aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox} focusable="false" set:html={dots} />
+</span>
