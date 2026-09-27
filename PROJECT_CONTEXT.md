@@ -1070,3 +1070,11 @@ Desktop retains three rendered sets. Mobile now uses fifteen sets (seven buffer 
 - destroyWorkLoopCarousel must clear the settling timer and remove touch, scrollend, scroll and resize listeners.
 
 Regression checks: both directions with scrollend listeners disabled, a held finger with no scroll events, continued inertia after touchend, multiple cycles per gesture, height-only resize, desktop/mobile rebuilds and project open/Back position restoration. Browser automation is not a substitute for testing momentum on a physical iPhone.
+
+## 32. Carousel covers and hero loading
+
+The five cover PNGs in public/images remain source originals. index.astro uses Astro getImage to generate hashed WebP variants at 640, 960, 1440 and original width. Carousel cards use srcset/sizes, explicit intrinsic dimensions, loading="lazy" and decoding="async"; cloned slides must retain those attributes. Do not eagerly load all mobile buffer copies.
+
+The project-cover-images JSON supplies the same generated variants to the project hero, which uses eager/high-priority loading and full-width sizes. Do not reintroduce a separate raw PNG hero URL: the carousel and detail view should share the responsive cover assets.
+
+Original PNGs passed full decoding checks. The reported partial-image display on iPhone was not reproduced on physical hardware; the fix reduces transfer/decode pressure and uses new cache keys. Production-build checks covered three cold-cache reloads, all five carousel-to-hero transitions at iPhone 11 dimensions/DPR, and complete decoding of the generated mobile variants.

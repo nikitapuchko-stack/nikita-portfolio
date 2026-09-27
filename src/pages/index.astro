@@ -1,12 +1,33 @@
 ---
 import "../styles/global.css";
 import NavDotIcon from "../components/NavDotIcon.astro";
+import { getImage } from "astro:assets";
+import cogsCover from "../../public/images/cogs.png";
+import coilCover from "../../public/images/kenya-coffee.png";
+import beincryptoCover from "../../public/images/beincrypto.png";
+import heinekenCover from "../../public/images/heineken.png";
+import morettiCover from "../../public/images/moretti.png";
 import backToListSource from "../../public/images/Header buttons/BackToList_button.svg?raw";
 
 // Inline the local asset like the other header icons; no runtime asset URL.
 const backToListSvg = backToListSource.replaceAll('fill="#008CFF"', 'fill="currentColor"');
 
 const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
+const carouselSizes = "(max-width: 960px) calc(100vw - 24px), calc(62vw - 45px)";
+// Shared by carousel copies and project heroes; Astro emits hashed assets.
+const projectCovers = Object.fromEntries(await Promise.all(
+  Object.entries({ cogs: cogsCover, kenya: coilCover, beincrypto: beincryptoCover, heineken: heinekenCover, moretti: morettiCover })
+    .map(async ([id, source]) => {
+      const widths = [640, 960, 1440, source.width];
+      const variants = await Promise.all(widths.map(width => getImage({ src: source, width, format: "webp", quality: 85 })));
+      return [id, {
+        src: variants[1].src,
+        srcset: variants.map((image, index) => `${image.src} ${widths[index]}w`).join(", "),
+        width: source.width,
+        height: source.height,
+      }];
+    })
+));
 ---
 
 <!DOCTYPE html>
@@ -366,7 +387,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
         <div class="scroll-panel work-panel" id="work-panel" aria-label="Work panel">
           <main class="carousel" id="work">
             <article class="slide" data-project="cogs" tabindex="0">
-              <img src={`${base}images/cogs.png`} alt="COGS Cycling Community brand identity" />
+              <img {...projectCovers.cogs} sizes={carouselSizes} loading="lazy" decoding="async" alt="COGS Cycling Community brand identity" />
 
               <div class="project-hover-info">
                 <h2>COGS Cycling Community</h2>
@@ -375,7 +396,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
             </article>
 
             <article class="slide" data-project="kenya" tabindex="0">
-              <img src={`${base}images/kenya-coffee.png`} alt="COIL Coffee packaging" />
+              <img {...projectCovers.kenya} sizes={carouselSizes} loading="lazy" decoding="async" alt="COIL Coffee packaging" />
 
               <div class="project-hover-info">
                 <h2>COIL Coffee</h2>
@@ -384,7 +405,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
             </article>
 
             <article class="slide" data-project="beincrypto" tabindex="0">
-              <img src={`${base}images/beincrypto.png`} alt="BeInCrypto Awards 2026 outdoor campaign" />
+              <img {...projectCovers.beincrypto} sizes={carouselSizes} loading="lazy" decoding="async" alt="BeInCrypto Awards 2026 outdoor campaign" />
 
               <div class="project-hover-info">
                 <h2>BeInCrypto Awards 2026</h2>
@@ -393,7 +414,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
             </article>
 
             <article class="slide" data-project="heineken" tabindex="0">
-              <img src={`${base}images/heineken.png`} alt="Heineken Formula 1 influencer kit" />
+              <img {...projectCovers.heineken} sizes={carouselSizes} loading="lazy" decoding="async" alt="Heineken Formula 1 influencer kit" />
 
               <div class="project-hover-info">
                 <h2>Heineken × Formula 1</h2>
@@ -402,7 +423,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
             </article>
 
             <article class="slide" data-project="moretti" tabindex="0">
-              <img src={`${base}images/moretti.png`} alt="Birra Moretti packaging" />
+              <img {...projectCovers.moretti} sizes={carouselSizes} loading="lazy" decoding="async" alt="Birra Moretti packaging" />
 
               <div class="project-hover-info">
                 <h2>Birra Moretti</h2>
@@ -454,6 +475,7 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
       </footer>
     </template>
 
+    <script is:inline type="application/json" id="project-cover-images" set:html={JSON.stringify(projectCovers)}></script>
     <script is:inline src={`${base}script.js`}></script>
   </body>
 </html>

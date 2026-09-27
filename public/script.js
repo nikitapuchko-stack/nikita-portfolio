@@ -1,4 +1,5 @@
 const basePath = document.body.dataset.basePath || "/";
+const projectCoverImages = JSON.parse(document.getElementById("project-cover-images").textContent);
 
 const projectDefinitions = {
   cogs: {
@@ -18,7 +19,6 @@ const projectDefinitions = {
     ],
     title: "COGS Cycling Community",
     category: "Brand identity",
-    hero: `${basePath}images/cogs.png`,
     meta: {
       type: "Brand identity",
       role: "Art-director, graphic designer",
@@ -55,7 +55,6 @@ const projectDefinitions = {
     ],
     title: "COIL Coffee",
     category: "Packaging design",
-    hero: `${basePath}images/kenya-coffee.png`,
     meta: {
       type: "Brand identity",
       role: "Art-director, graphic designer",
@@ -85,7 +84,6 @@ const projectDefinitions = {
     ],
     title: "BeInCrypto Awards 2026",
     category: "Campaign identity",
-    hero: `${basePath}images/beincrypto.png`,
     meta: {
       type: "Event identity",
       role: "Art-director, graphic designer",
@@ -111,7 +109,6 @@ const projectDefinitions = {
     ],
     title: "Heineken × Formula 1",
     category: "Experiential kit",
-    hero: `${basePath}images/heineken.png`,
     meta: {
       type: "Experiential kit",
       role: "Art-director, graphic designer, 3D artist",
@@ -143,7 +140,6 @@ const projectDefinitions = {
     ],
     title: "Birra Moretti",
     category: "Packaging design",
-    hero: `${basePath}images/moretti.png`,
     meta: {
       type: "Packaging design",
       role: "Graphic designer, 3D artist",
@@ -227,6 +223,7 @@ function renderProjectDetail(projectId) {
   const projectDetailContent = document.querySelector(".project-detail-content");
 
   if (!project || !projectDetailContent) return;
+  const cover = projectCoverImages[projectId];
 
   const sections = (project.sections || []).map((section, index, items) => {
     const separator = section.type === "text" && items[index - 1]?.type === "text"
@@ -274,7 +271,10 @@ function renderProjectDetail(projectId) {
     </div>
 
     <section class="project-detail-hero">
-      <img src="${project.hero}" alt="${project.title}" />
+      <img src="${cover.src}" srcset="${cover.srcset}"
+        sizes="(max-width: 960px) calc(100vw - 24px), calc(100vw - 40px)"
+        width="${cover.width}" height="${cover.height}"
+        loading="eager" decoding="async" fetchpriority="high" alt="${project.title}" />
     </section>
 
     <div class="project-post-hero-shell">
