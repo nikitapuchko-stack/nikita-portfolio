@@ -1583,13 +1583,17 @@ a {
 
 @media (max-width: 960px) {
   body {
+    min-height: 100dvh;
     overflow: hidden;
   }
 
   .page {
     grid-template-columns: 1fr;
 
-    padding: 12px;
+    padding: calc(12px + env(safe-area-inset-top, 0px))
+      max(12px, env(safe-area-inset-right, 0px))
+      0
+      max(12px, env(safe-area-inset-left, 0px));
 
     height: 100dvh;
 
@@ -1604,7 +1608,7 @@ a {
 
   .nav {
     gap: clamp(12px, 3vw, 18px);
-    padding: 14px 0 16px;
+    padding: 24px 0;
     overflow-x: auto;
     scrollbar-width: none;
   }
