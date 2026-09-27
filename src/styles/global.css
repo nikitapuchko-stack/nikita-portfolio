@@ -9,6 +9,10 @@
   --radius: 18px;
   --gap: 4px;
   --project-content-width: 1100px;
+  /* Preserve desktop sizes; reduce copy by about 17% on compact screens. */
+  --copy-size: clamp(0.875rem, calc(0.75rem + 0.333333vw), 1.05rem);
+  --copy-heading-size: clamp(0.75rem, calc(0.642857rem + 0.285714vw), 0.9rem);
+  --project-heading-size: clamp(0.95rem, 1.5vw, 1.5rem);
   --separator-dot-size: 8px;
   --separator-dot-gap: 10px;
 }
@@ -252,6 +256,11 @@ a {
   display: block;
 }
 
+.nav-back-to-list svg {
+  width: 97.5px;
+  height: 9.75px;
+}
+
 .nav-back-to-list:hover {
   color: var(--blue);
 }
@@ -351,6 +360,7 @@ a {
 
 .project-case-study {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0;
   background: var(--bg);
 }
@@ -383,7 +393,7 @@ a {
 .project-section-title {
   margin: 0 0 20px;
   font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-  font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+  font-size: var(--project-heading-size);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0;
@@ -404,7 +414,7 @@ a {
 .project-overview p,
 .project-text p {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--copy-size);
   line-height: 1.7;
   letter-spacing: -0.02em;
   color: #1a1a1a;
@@ -472,17 +482,47 @@ a {
   background: transparent;
 }
 
+.project-post-hero-shell,
+.project-post-hero-content {
+  display: contents;
+}
+
 @media (min-width: 961px) {
+  .project-detail-view {
+    --project-ui-rail: clamp(56px, 5.5vw, 88px);
+    --project-post-hero-columns: var(--project-ui-rail) minmax(0, var(--project-content-width)) var(--project-ui-rail);
+  }
+
+  .project-post-hero-shell {
+    display: grid;
+    grid-template-columns: var(--project-post-hero-columns);
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .project-post-hero-content {
+    display: flow-root;
+    grid-column: 2;
+    min-width: 0;
+    width: 100%;
+  }
+
   .project-text {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     column-gap: var(--gap);
     align-items: start;
+  }
+
+  .project-overview p + p,
+  .project-text-body p + p {
+    margin-top: 40px;
   }
 
   .project-text .project-block-label {
     margin: 0;
     font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-    font-size: clamp(1.1rem, 1.5vw, 1.5rem);
+    font-size: var(--project-heading-size);
     font-weight: 700;
     line-height: 1;
     letter-spacing: 0;
@@ -527,12 +567,33 @@ a {
     top: 50%;
     transform: translateY(-50%);
     font-family: inherit;
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     font-weight: 500;
     line-height: 1;
-    color: var(--ink);
+    color: var(--blue);
     pointer-events: none;
     z-index: 3;
+  }
+
+  .project-scroll-control,
+  .project-section-indicator {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 220ms ease, visibility 0s linear 220ms;
+  }
+
+  .project-scroll-control.is-visible,
+  .project-section-indicator.is-visible {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0s;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project-scroll-control,
+    .project-section-indicator {
+      transition: none;
+    }
   }
 
   .nav-link-work:not(.is-active):hover {
@@ -548,6 +609,12 @@ a {
     max-width: var(--project-content-width);
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+@media (min-width: 961px) and (max-width: 1180px) {
+  .project-detail-view {
+    --project-ui-rail: 56px;
   }
 }
 
@@ -636,6 +703,182 @@ a {
     padding-right: 0;
   }
 
+}
+
+.page:has(> .content-stage.is-project-open) {
+  padding-bottom: 0;
+}
+
+.project-closing {
+  width: 100%;
+  min-width: 0;
+  margin: clamp(80px, 10vw, 160px) auto 0;
+  padding: clamp(24px, 3vw, 40px) clamp(16px, 3vw, 48px);
+  background: var(--blue);
+  color: #fff;
+}
+
+.project-closing-main {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  align-items: start;
+  column-gap: clamp(48px, 12vw, 192px);
+}
+
+.project-closing-actions {
+  display: grid;
+  justify-items: start;
+  gap: 20px;
+}
+
+.project-closing-main > * {
+  align-self: start;
+  min-width: 0;
+}
+
+.project-closing-back,
+.project-closing-back span {
+  display: block;
+}
+
+.project-closing button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.project-closing button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 5px;
+}
+
+.project-closing button:hover {
+  opacity: 0.75;
+}
+
+.project-closing-back svg {
+  display: block;
+  width: 97.5px;
+  height: auto;
+}
+
+.project-closing-contacts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-closing-contacts span {
+  font-size: 0.875rem;
+}
+
+.project-closing-contacts img {
+  width: 18px;
+  height: 18px;
+}
+
+.project-closing-note {
+  margin: 0;
+  font-size: var(--copy-size);
+  line-height: 1.5;
+  text-align: left;
+  /* Align the visible capitals with the SVGs, excluding font leading. */
+  text-box-trim: trim-start;
+  text-box-edge: cap alphabetic;
+}
+
+@supports not (text-box-trim: trim-start) {
+  .project-closing-note {
+    position: relative;
+    top: -0.4em;
+  }
+}
+
+.project-closing-up {
+  justify-self: end;
+}
+
+.project-closing-up img {
+  width: 28px;
+  height: auto;
+}
+
+.project-closing .project-closing-dots {
+  --separator-dot-gap: 32px;
+  width: 100%;
+  max-width: none;
+  margin: clamp(32px, 5vw, 60px) 0 0;
+}
+
+.project-closing .project-closing-dots span {
+  background: currentColor;
+}
+
+@media (max-width: 960px) {
+  .project-closing {
+    padding: 24px 12px;
+  }
+
+  .project-closing-main {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .project-closing-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .project-closing-back svg {
+    width: 160px;
+  }
+
+  .project-closing-contacts {
+    gap: 8px;
+  }
+
+  .project-closing-contacts span {
+    font-size: 1.375rem;
+    line-height: 1;
+  }
+
+  .project-closing-contacts img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .project-closing-up {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .project-closing-actions {
+    gap: 12px;
+  }
+
+  .project-closing-back svg {
+    width: 128px;
+  }
+
+  .project-closing-contacts {
+    gap: 6px;
+  }
+
+  .project-closing-contacts span {
+    font-size: 1.125rem;
+  }
+
+  .project-closing-contacts img {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .sidebar {
@@ -797,7 +1040,7 @@ a {
 }
 
 .eyebrow {
-  font-size: 0.9rem;
+  font-size: var(--copy-heading-size);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -808,14 +1051,14 @@ a {
 .bio p,
 .card p,
 .card li {
-  font-size: 1.05rem;
+  font-size: var(--copy-size);
   line-height: 1.5;
   color: #1c1c1c;
 }
 
 .bio p {
   max-width: 740px;
-  font-size: 1.05rem;
+  font-size: var(--copy-size);
   line-height: 1.45;
   letter-spacing: -0.02em;
 }
@@ -841,7 +1084,7 @@ a {
 }
 
 .card h3 {
-  font-size: 0.9rem;
+  font-size: var(--copy-heading-size);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -857,7 +1100,7 @@ a {
 }
 
 .card li {
-  font-size: 1.05rem;
+  font-size: var(--copy-size);
   line-height: 1.45;
 }
 
@@ -869,7 +1112,7 @@ a {
 
 .what-i-do-title {
   margin: 0 0 18px;
-  font-size: 0.9rem;
+  font-size: var(--copy-heading-size);
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -884,7 +1127,7 @@ a {
 
 .skills-title {
   margin: 0 0 10px;
-  font-size: 0.9rem;
+  font-size: var(--copy-heading-size);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -901,7 +1144,7 @@ a {
 
 .skill-label {
   font-family: inherit;
-  font-size: 1.05rem;
+  font-size: var(--copy-size);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.45;
@@ -1033,7 +1276,7 @@ a {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 14px;
-  font-size: 0.95rem;
+  font-size: clamp(0.8rem, calc(0.692857rem + 0.285714vw), 0.95rem);
   line-height: 1.8;
   letter-spacing: -0.04em;
   text-transform: uppercase;

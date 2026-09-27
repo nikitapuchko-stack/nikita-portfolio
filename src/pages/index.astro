@@ -433,6 +433,27 @@ const base = (import.meta.env.BASE_URL || "/").replace(/\/?$/, "/");
       </div>
     </div>
 
+    <template id="project-closing-template">
+      <footer class="project-closing" aria-label="Project closing">
+        <div class="project-closing-main">
+          <div class="project-closing-actions">
+            <button class="project-closing-back" type="button" data-project-action="back" aria-label="Back to project list">
+              <span aria-hidden="true" set:html={backToListSvg} />
+            </button>
+            <button class="project-closing-contacts" type="button" data-project-action="contacts">
+              <img src={`${base}images/icons/mail_icon.svg`} alt="" />
+              <span>CONTACTS</span>
+            </button>
+          </div>
+          <p class="project-closing-note">*** All the work shown on this website was designed and created by me. Though some of the campaigns extended beyond what is presented here and included additional materials developed by the team I worked with.</p>
+          <button class="project-closing-up" type="button" data-project-action="up" aria-label="Scroll project to top">
+            <img src={`${base}images/Header buttons/UP.svg`} alt="" />
+          </button>
+        </div>
+        <div class="project-dot-separator project-closing-dots" aria-hidden="true"></div>
+      </footer>
+    </template>
+
     <script is:inline src={`${base}script.js`}></script>
   </body>
 </html>
