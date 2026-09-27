@@ -1055,3 +1055,17 @@ Before editing anything, inspect the relevant current files and make the smalles
 
 After every change, verify desktop, mobile, scrolling, carousel loop, project card clicks, project page transitions and responsive resize.
 ```
+
+---
+
+## 31. Mobile carousel momentum (September 2026)
+
+Keep the existing three rendered sets, rendered DOM measurements, and delayed breakpoint rebuild.
+
+- On mobile browsers supporting `scrollend`, use the clone sets as a buffer during native scrolling. Recenter after scrolling settles; retain an emergency rebase near the actual ends of the scroll range.
+- Do not write `scrollTop` on height-only viewport changes when `cycleSpan` and `middleStart` are unchanged. Mobile browser chrome can trigger these resize events during scrolling, and redundant writes interfere with native momentum.
+- Keep a one-pixel tolerance at loop boundaries: responsive card dimensions can be fractional while scroll positions are rounded.
+- Remove the `scrollend` handler in `destroyWorkLoopCarousel`, alongside the existing scroll/resize handlers.
+- Browsers without `scrollend` retain the original boundary-based behavior.
+
+Regression checks: touch gestures across both seams, height-only resize without scrollTop writes, desktop/mobile breakpoint rebuilds, and project open/Back restoring the carousel position. Desktop looping and the three-set architecture remain unchanged.

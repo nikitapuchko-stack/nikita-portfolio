@@ -823,6 +823,10 @@ a {
     padding: 24px 12px;
   }
 
+  .project-closing-note {
+    font-size: 12px;
+  }
+
   .project-closing-main {
     grid-template-columns: minmax(0, 1fr);
     gap: 32px;

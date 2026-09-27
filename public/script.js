@@ -791,6 +791,10 @@ function destroyWorkLoopCarousel() {
     );
   }
 
+  if (scroller._loopScrollEndHandler) {
+    scroller.removeEventListener("scrollend", scroller._loopScrollEndHandler);
+  }
+
   if (scroller._loopRafId) {
     cancelAnimationFrame(scroller._loopRafId);
   }
@@ -838,6 +842,7 @@ function destroyWorkLoopCarousel() {
   );
 
   scroller._loopScrollHandler = null;
+  scroller._loopScrollEndHandler = null;
   scroller._loopResizeHandler = null;
   scroller._loopRafId = null;
   scroller._loopResizeRafId = null;
@@ -913,6 +918,7 @@ function initWorkLoopCarousel() {
 
   let isSyncing = false;
   let metrics = null;
+  const mobileLoop = window.matchMedia("(max-width: 960px)");
 
   /*
    * Измеряем настоящий rendered layout,
@@ -973,7 +979,7 @@ function initWorkLoopCarousel() {
     };
   }
 
-  function handleLoopScroll() {
+  function handleLoopScroll(settled = false) {
     if (isSyncing || !metrics) return;
 
     const {
@@ -983,12 +989,22 @@ function initWorkLoopCarousel() {
 
     const current = scroller.scrollTop;
 
+    // Let native mobile momentum run through the identical clone sets.
+    // Recenter at rest, or only when approaching a real end of the buffer.
+    if (mobileLoop.matches && settled !== true && "onscrollend" in scroller) {
+      const buffer = Math.min(scroller.clientHeight * 0.5, cycleSpan * 0.25);
+      const maxScroll = scroller.scrollHeight - scroller.clientHeight;
+      if (current > buffer && current < maxScroll - buffer) return;
+    }
+
     /*
      * Пользователь остаётся примерно
      * внутри среднего набора.
      */
-    const lowerBoundary = middleStart;
-    const upperBoundary = middleStart + cycleSpan;
+    // Fractional slide heights can round scrollTop across a boundary.
+    // A one-pixel tolerance prevents repeated rebasing at the same seam.
+    const lowerBoundary = middleStart - 1;
+    const upperBoundary = middleStart + cycleSpan + 1;
 
     if (current < lowerBoundary) {
       isSyncing = true;
@@ -1053,6 +1069,12 @@ function initWorkLoopCarousel() {
 
         metrics = newMetrics;
 
+        // Mobile browser chrome changes viewport height without changing
+        // card geometry. Even a redundant scrollTop write interrupts inertia.
+        if (oldMetrics &&
+            Math.abs(newMetrics.cycleSpan - oldMetrics.cycleSpan) < 0.01 &&
+            Math.abs(newMetrics.middleStart - oldMetrics.middleStart) < 0.01) return;
+
         /*
          * Сохраняем приблизительно ту же
          * позицию внутри текущего цикла.
@@ -1075,6 +1097,7 @@ function initWorkLoopCarousel() {
 
   scroller._loopScrollHandler =
     handleLoopScroll;
+  scroller._loopScrollEndHandler = () => handleLoopScroll(true);
 
   scroller._loopResizeHandler =
     handleResize;
@@ -1084,6 +1107,8 @@ function initWorkLoopCarousel() {
     handleLoopScroll,
     { passive: true }
   );
+
+  scroller.addEventListener("scrollend", scroller._loopScrollEndHandler, { passive: true });
 
   window.addEventListener(
     "resize",
