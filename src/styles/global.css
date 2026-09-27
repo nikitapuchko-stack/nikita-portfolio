@@ -891,6 +891,9 @@ a {
 }
 
 .sidebar {
+  --sidebar-block-gap: 92px;
+  --sidebar-before-dots: 92px;
+  --sidebar-after-dots: 130px;
   position: static;
 
   height: 100%;
@@ -898,7 +901,7 @@ a {
 
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: var(--sidebar-block-gap);
 
   overflow-y: auto;
   overflow-x: hidden;
@@ -919,7 +922,7 @@ a {
   flex-direction: column;
   position: relative;
   margin-top: 0;
-  margin-bottom: 64px;
+  margin-bottom: 0;
   background: var(--blue);
   border-radius: 0;
   overflow: hidden;
@@ -1074,8 +1077,12 @@ a {
 
 .cards {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 32px;
+  margin-top: 0;
+}
+
+.sidebar > .bio + .cards {
+  margin-top: calc(32px - var(--sidebar-block-gap));
 }
 
 .card {
@@ -1084,7 +1091,7 @@ a {
   border-top: 1px solid #008CFF;
   border-bottom: none;
   border-radius: 0;
-  padding: 18px 0 16px;
+  padding: 18px 0 0;
   margin-top: 0;
 }
 
@@ -1115,12 +1122,17 @@ a {
 
 .what-i-do {
   display: grid;
-  gap: 30px;
-  margin-top: 108px;
+  gap: var(--sidebar-block-gap);
+  margin-top: 0;
+}
+
+.what-i-do > .what-i-do-title + .service-item,
+.what-i-do > .service-item + .service-item {
+  margin-top: calc(32px - var(--sidebar-block-gap));
 }
 
 .what-i-do-title {
-  margin: 0 0 18px;
+  margin: 0;
   font-size: var(--copy-heading-size);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1131,7 +1143,7 @@ a {
 .skills {
   display: grid;
   gap: 26px;
-  margin-top: 54px;
+  margin-top: 0;
 }
 
 .skills-title {
@@ -1235,11 +1247,13 @@ a {
 
 .what-i-do-separator {
   width: 100%;
-  margin: 54px 0 0;
+  /* Sidebar flex gaps also contribute on both sides of each separator. */
+  margin: calc(var(--sidebar-before-dots) - var(--sidebar-block-gap)) 0
+    calc(var(--sidebar-after-dots) - var(--sidebar-block-gap));
 }
 
 .bottom-separator {
-  margin-top: 32px;
+  --sidebar-after-dots: 32px;
 }
 
 .what-i-do-separator span,
@@ -1280,7 +1294,7 @@ a {
 }
 
 .service-tags {
-  margin-top: 26px;
+  margin-top: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1304,7 +1318,7 @@ a {
 .footer {
   container: footer / inline-size;
   width: 100%;
-  margin-top: 50px;
+  margin-top: 0;
   color: #fff;
 }
 
@@ -1764,10 +1778,6 @@ a {
     overflow: hidden;
     text-overflow: ellipsis;
     text-align: right;
-  }
-
-  .brand-block {
-    margin-bottom: 38px;
   }
 
   .brand {
