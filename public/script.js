@@ -777,6 +777,8 @@ function destroyWorkLoopCarousel() {
 
   if (!scroller) return;
 
+  scroller._loopSettleCleanup?.();
+
   if (scroller._loopScrollHandler) {
     scroller.removeEventListener(
       "scroll",
@@ -843,6 +845,7 @@ function destroyWorkLoopCarousel() {
 
   scroller._loopScrollHandler = null;
   scroller._loopScrollEndHandler = null;
+  scroller._loopSettleCleanup = null;
   scroller._loopResizeHandler = null;
   scroller._loopRafId = null;
   scroller._loopResizeRafId = null;
@@ -888,6 +891,11 @@ function initWorkLoopCarousel() {
   });
 
   const count = templates.length;
+  const mobileLoop = window.matchMedia("(max-width: 960px)");
+  // iOS momentum must not be interrupted by a scrollTop rebase. Keep a
+  // generous native-scroll buffer on each side, then recenter at rest.
+  const setCount = mobileLoop.matches ? 15 : 3;
+  const middleSet = Math.floor(setCount / 2);
 
   scroller._originalSlides = templates.map(
     (slide) => slide.cloneNode(true)
@@ -902,11 +910,11 @@ function initWorkLoopCarousel() {
    * ORIGINAL / working set
    * clone
    */
-  for (let setIndex = 0; setIndex < 3; setIndex++) {
+  for (let setIndex = 0; setIndex < setCount; setIndex++) {
     templates.forEach((template) => {
       const slide = template.cloneNode(true);
 
-      if (setIndex !== 1) {
+      if (setIndex !== middleSet) {
         slide.classList.add("is-loop-clone");
       } else {
         slide.classList.remove("is-loop-clone");
@@ -918,7 +926,41 @@ function initWorkLoopCarousel() {
 
   let isSyncing = false;
   let metrics = null;
-  const mobileLoop = window.matchMedia("(max-width: 960px)");
+  let touching = false;
+  let settleTimer = null;
+  const touchController = new AbortController();
+
+  const scheduleSettle = () => {
+    clearTimeout(settleTimer);
+    if (!mobileLoop.matches || touching) return;
+    // Also works on Safari versions without scrollend. Every momentum
+    // scroll event restarts this quiet period; touchend alone is not rest.
+    const position = scroller.scrollTop;
+    settleTimer = setTimeout(() => {
+      if (touching) return;
+      if (Math.abs(scroller.scrollTop - position) > 0.01) {
+        scheduleSettle();
+        return;
+      }
+      handleLoopScroll(true);
+    }, 250);
+  };
+
+  const touchOptions = { passive: true, signal: touchController.signal };
+  scroller.addEventListener("touchstart", () => {
+    touching = true;
+    clearTimeout(settleTimer);
+  }, touchOptions);
+  const finishTouch = (event) => {
+    touching = event.touches.length > 0;
+    scheduleSettle();
+  };
+  window.addEventListener("touchend", finishTouch, touchOptions);
+  window.addEventListener("touchcancel", finishTouch, touchOptions);
+  scroller._loopSettleCleanup = () => {
+    clearTimeout(settleTimer);
+    touchController.abort();
+  };
 
   /*
    * Измеряем настоящий rendered layout,
@@ -929,12 +971,12 @@ function initWorkLoopCarousel() {
       scroller.querySelectorAll(".slide")
     );
 
-    if (slides.length < count * 3) {
+    if (slides.length < count * setCount) {
       return null;
     }
 
-    const middleFirst = slides[count];
-    const thirdFirst = slides[count * 2];
+    const middleFirst = slides[count * middleSet];
+    const thirdFirst = slides[count * (middleSet + 1)];
 
     if (!middleFirst || !thirdFirst) {
       return null;
@@ -989,12 +1031,12 @@ function initWorkLoopCarousel() {
 
     const current = scroller.scrollTop;
 
-    // Let native mobile momentum run through the identical clone sets.
-    // Recenter at rest, or only when approaching a real end of the buffer.
-    if (mobileLoop.matches && settled !== true && "onscrollend" in scroller) {
-      const buffer = Math.min(scroller.clientHeight * 0.5, cycleSpan * 0.25);
-      const maxScroll = scroller.scrollHeight - scroller.clientHeight;
-      if (current > buffer && current < maxScroll - buffer) return;
+    if (mobileLoop.matches) {
+      if (settled !== true) {
+        scheduleSettle();
+        return;
+      }
+      if (touching || projectDetailState.openProjectId) return;
     }
 
     /*
@@ -1010,7 +1052,7 @@ function initWorkLoopCarousel() {
       isSyncing = true;
 
       scroller.scrollTop =
-        current + cycleSpan;
+        current + Math.ceil((middleStart - current) / cycleSpan) * cycleSpan;
 
       scroller._loopRafId =
         requestAnimationFrame(() => {
@@ -1024,7 +1066,7 @@ function initWorkLoopCarousel() {
       isSyncing = true;
 
       scroller.scrollTop =
-        current - cycleSpan;
+        current - Math.floor((current - middleStart) / cycleSpan) * cycleSpan;
 
       scroller._loopRafId =
         requestAnimationFrame(() => {
@@ -1097,7 +1139,7 @@ function initWorkLoopCarousel() {
 
   scroller._loopScrollHandler =
     handleLoopScroll;
-  scroller._loopScrollEndHandler = () => handleLoopScroll(true);
+  scroller._loopScrollEndHandler = scheduleSettle;
 
   scroller._loopResizeHandler =
     handleResize;
