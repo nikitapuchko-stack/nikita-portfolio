@@ -420,6 +420,11 @@ a {
   color: #1a1a1a;
 }
 
+.project-overview p + p,
+.project-text-body p + p {
+  margin-top: 40px;
+}
+
 .project-overview,
 .project-text {
   padding-top: 60px;
@@ -512,11 +517,6 @@ a {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     column-gap: var(--gap);
     align-items: start;
-  }
-
-  .project-overview p + p,
-  .project-text-body p + p {
-    margin-top: 40px;
   }
 
   .project-text .project-block-label {
@@ -630,6 +630,11 @@ a {
 @media (max-width: 960px) {
   .nav-svg {
     height: clamp(12px, 4vw, 17px);
+  }
+
+  .project-overview p + p,
+  .project-text-body p + p {
+    margin-top: 20px;
   }
 
   .nav-link-work {
