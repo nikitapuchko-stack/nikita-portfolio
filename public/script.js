@@ -554,7 +554,7 @@ function initHeaderProjectBack() {
   if (!button) return;
 
   button.addEventListener("click", () => {
-    if (!projectDetailState.openProjectId || window.matchMedia("(max-width: 960px)").matches) return;
+    if (!projectDetailState.openProjectId) return;
     const projectId = projectDetailState.openProjectId;
     let timer;
     const cleanup = () => {
@@ -568,7 +568,7 @@ function initHeaderProjectBack() {
       cleanup();
       if (projectDetailState.openProjectId === projectId) {
         closeProjectDetailView();
-        document.querySelector(".work-toggle")?.focus({ preventScroll: true });
+        document.querySelector('.site-header [data-nav="home"]')?.focus({ preventScroll: true });
       }
     };
     button._cancelFade = cleanup;
@@ -1189,7 +1189,12 @@ function initWorkLoopCarousel() {
   );
 }
 
+// Set to true to restore the infinite work carousel and its breakpoint rebuilds.
+const WORK_CAROUSEL_LOOP_ENABLED = false;
+
 function setupWorkCarouselLifecycle() {
+  if (!WORK_CAROUSEL_LOOP_ENABLED) return;
+
   const mobileQuery = window.matchMedia("(max-width: 960px)");
 
   const refreshLoopForViewport = () => {
@@ -1222,6 +1227,7 @@ function initCustomScrollbars() {
 }
 
 function setActiveNav(navName) {
+  if (document.querySelector('.intro-view')?.dataset.open === "true") navName = "home";
   const links = document.querySelectorAll(".site-header .nav-link[data-nav]");
   const isMobile = window.matchMedia("(max-width: 960px)").matches;
   // Clear other links first so even synchronous changes never create two actives.
@@ -1282,7 +1288,7 @@ function updateMobilePanelNavState() {
 function initMobileWorkPanel() {
   const layout = document.querySelector(".content-layout");
   const toggle = document.querySelector(".work-toggle");
-  if (!layout || !toggle) return;
+  if (!layout) return;
 
   const mobileQuery = window.matchMedia("(max-width: 960px)");
   const sidebar = document.querySelector(".sidebar");
@@ -1345,7 +1351,7 @@ function initMobileWorkPanel() {
     });
   });
 
-  toggle.addEventListener("click", (event) => {
+  toggle?.addEventListener("click", (event) => {
     if (!mobileQuery.matches) {
       event.preventDefault();
       return;
@@ -1369,7 +1375,7 @@ function initMobileWorkPanel() {
         wasMobile = isMobile;
         previousWidth = width;
       }
-      toggle.setAttribute("aria-expanded", String(isMobile && layout.classList.contains("is-work-open")));
+      toggle?.setAttribute("aria-expanded", String(isMobile && layout.classList.contains("is-work-open")));
       updateMobilePanelNavState();
       if (!isMobile || layout.scrollLeft < 1) scrollSidebarToTarget();
     });
@@ -1419,6 +1425,8 @@ function initMobileProjectOverlay() {
   carousel.addEventListener("scroll", updateTopSlide, { passive: true });
   window.addEventListener("resize", updateTopSlide);
 }
+
+document.addEventListener("intro:visibility", updateSidebarActiveNav);
 
 function initNavDotSpread() {
   const spread = 0.12;

@@ -29,6 +29,7 @@ export function normalizeWheelDelta(event, viewportHeight) {
 export function initIntroCarousel(view, images, signal, onCenterChange) {
   const carousel = view.querySelector(".intro-carousel");
   const cards = [...carousel.querySelectorAll(".intro-card")];
+  const cardImages = new Map(cards.map(card => [card, card.querySelector("img")]));
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const options = { signal };
   const pixelsPerCard = 240;
@@ -51,11 +52,12 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
       const virtualIndex = nearest + slot;
       const card = pool.get(modulo(virtualIndex, cards.length));
       const image = images[modulo(virtualIndex, images.length)];
-      if (card.getAttribute("src") !== image.src) {
-        card.src = image.src;
-        card.width = image.width;
-        card.height = image.height;
-        card.alt = image.alt;
+      const cardImage = cardImages.get(card);
+      if (cardImage.getAttribute("src") !== image.src) {
+        cardImage.src = image.src;
+        cardImage.width = image.width;
+        cardImage.height = image.height;
+        cardImage.alt = image.alt;
       }
       const state = getInterpolatedSlotState(virtualIndex - currentPosition);
       card.dataset.slot = String(slot);
@@ -95,7 +97,7 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
   }
 
   function startMotion() {
-    if (carouselRaf !== null || signal.aborted) return;
+    if (carouselRaf !== null || signal.aborted || view.dataset.open === "false") return;
     lastMotionTime = performance.now();
     carouselRaf = requestAnimationFrame(updateIntroCarouselMotion);
   }
@@ -107,7 +109,7 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
 
   function snapIntroCarousel(target = Math.round(targetPosition)) {
     cancelSnap();
-    if (signal.aborted || !images.length) return;
+    if (signal.aborted || !images.length || view.dataset.open === "false") return;
     targetPosition = target;
     snapping = true;
     startMotion();
@@ -115,7 +117,7 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
 
   function moveBy(delta, sensitivity = 1 / pixelsPerCard) {
     cancelSnap();
-    if (signal.aborted || images.length < 2) return;
+    if (signal.aborted || images.length < 2 || view.dataset.open === "false") return;
     // Accumulate intent even while the current position is still catching up.
     targetPosition = Math.round((targetPosition + delta * sensitivity) * 1e9) / 1e9;
     startMotion();
@@ -166,5 +168,12 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
     carouselRaf = null;
     touch = null;
   }, { once: true });
+  view.addEventListener("intro:pause", () => {
+    cancelSnap();
+    if (carouselRaf !== null) cancelAnimationFrame(carouselRaf);
+    carouselRaf = null;
+    targetPosition = currentPosition;
+    touch = null;
+  }, options);
   renderIntroCarouselPosition();
 }

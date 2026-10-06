@@ -56,7 +56,7 @@ export function initIntroDots(view, signal) {
   }
 
   function resume() {
-    if (signal.aborted || document.hidden || view.hidden) return;
+    if (signal.aborted || document.hidden || view.hidden || view.dataset.open === "false") return;
     if (reducedMotion.matches) {
       render(animation.reducedMotionFrame);
     } else if (!running) {
@@ -70,6 +70,8 @@ export function initIntroDots(view, signal) {
   document.addEventListener("visibilitychange", () => document.hidden ? pause() : resume(), options);
   window.addEventListener("pagehide", pause, options);
   window.addEventListener("pageshow", resume, options);
+  view.addEventListener("intro:pause", pause, options);
+  view.addEventListener("intro:resume", resume, options);
   reducedMotion.addEventListener("change", () => { pause(); resume(); }, options);
   signal.addEventListener("abort", pause, { once: true });
   resume();

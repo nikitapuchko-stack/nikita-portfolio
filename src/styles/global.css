@@ -68,6 +68,7 @@ a {
 }
 
 .nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 32px;
@@ -77,6 +78,7 @@ a {
 }
 
 .nav-link {
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -135,8 +137,8 @@ a {
   aspect-ratio: 425.24 / 61.57;
 }
 
-.nav-svg-work {
-  aspect-ratio: 208.47 / 61.57;
+.nav-svg-home {
+  aspect-ratio: 205.96 / 61.57;
 }
 
 .nav-link-work {
@@ -270,12 +272,6 @@ a {
   visibility: visible;
   pointer-events: auto;
   transition-delay: 0s;
-}
-
-@media (max-width: 960px) {
-  .nav-back-to-list {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

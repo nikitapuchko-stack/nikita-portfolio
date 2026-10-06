@@ -8,13 +8,12 @@ export function initIntroView() {
   const button = view?.querySelector(".intro-enter");
   if (!view || !page || !button || view.dataset.initialized) return;
   view.dataset.initialized = "true";
+  view.dataset.open = "true";
 
   const images = JSON.parse(view.querySelector("#intro-images").textContent);
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const inputs = new AbortController();
   const options = { signal: inputs.signal };
-  initIntroDots(view, inputs.signal);
-  const updateIntroPaletteForActiveCard = initIntroPalette(view, inputs.signal);
   const wasInert = page.inert;
   page.inert = true;
   view.focus({ preventScroll: true });
@@ -22,7 +21,6 @@ export function initIntroView() {
   const activeIndex = Number(view.dataset.activeIndex);
   let closed = false;
   const modulo = value => (value % images.length + images.length) % images.length;
-  initIntroCarousel(view, images, inputs.signal, updateIntroPaletteForActiveCard);
 
   view.addEventListener("keydown", event => {
     if (event.key === "Tab") {
@@ -34,7 +32,9 @@ export function initIntroView() {
   function closeIntroView() {
     if (closed) return;
     closed = true;
-    inputs.abort();
+    view.dataset.open = "false";
+    view.dispatchEvent(new Event("intro:pause"));
+    document.dispatchEvent(new Event("intro:visibility"));
     view.classList.add("is-closing");
     button.disabled = true;
     let finishTimer;
@@ -56,17 +56,44 @@ export function initIntroView() {
     }
   }
   button.addEventListener("click", closeIntroView, options);
+  document.querySelector('[data-nav="home"]')?.addEventListener("click", () => {
+    if (!closed || !view.hidden) return;
+    closed = false;
+    view.dataset.open = "true";
+    page.inert = true;
+    view.hidden = false;
+    view.inert = false;
+    button.disabled = false;
+    // Establish the offscreen position after display:none before transitioning in.
+    if (!reducedMotion.matches) void view.offsetWidth;
+    view.classList.remove("is-closing");
+    view.dispatchEvent(new Event("intro:resume"));
+    document.dispatchEvent(new Event("intro:visibility"));
+    view.focus({ preventScroll: true });
+  });
 
-  // Warm the initial stack first, then the remaining assets one at a time.
-  // This never holds up the overlay, CTA, or the existing site's initialization.
+  // Keep the default palette and masks until every teaser has finished decoding.
+  // Entry to the portfolio remains available even on a slow or failed connection.
   async function preloadIntroImages() {
+    const started = performance.now();
     const order = [...new Set([0, -1, 1, -2, 2, -3, 3, ...images.map((_, i) => i)].map(offset => modulo(activeIndex + offset)))];
-    for (const index of order) {
-      if (closed) break;
-      const image = new Image();
-      image.src = images[index].src;
-      try { await image.decode(); } catch { /* A failed preview must not block entry. */ }
+    async function worker() {
+      while (order.length) {
+        const image = new Image();
+        image.src = images[order.shift()].src;
+        try { await image.decode(); } catch { /* A failed asset must not trap the intro. */ }
+      }
     }
+    await Promise.all(Array.from({ length: 4 }, worker));
+    await Promise.allSettled([...view.querySelectorAll('.intro-card img')].map(image => image.decode()));
+    await new Promise(resolve => setTimeout(resolve, Math.max(0, 1000 - (performance.now() - started))));
+    view.classList.add('is-revealing');
+    await new Promise(resolve => setTimeout(resolve, reducedMotion.matches ? 0 : 470));
+    view.classList.add('is-ready');
+    initIntroDots(view, inputs.signal);
+    const updateIntroPaletteForActiveCard = initIntroPalette(view, inputs.signal);
+    initIntroCarousel(view, images, inputs.signal, updateIntroPaletteForActiveCard);
+    if (closed) view.dispatchEvent(new Event("intro:pause"));
   }
-  if (images.length) void preloadIntroImages();
+  void preloadIntroImages();
 }

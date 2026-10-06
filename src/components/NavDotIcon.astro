@@ -2,14 +2,14 @@
 import about from "../../public/images/Header buttons/About.svg?raw";
 import skills from "../../public/images/Header buttons/Skills.svg?raw";
 import contacts from "../../public/images/Header buttons/Contacts.svg?raw";
-import work from "../../public/images/Header buttons/Work.svg?raw";
+import home from "../../public/images/Header buttons/Home.svg?raw";
 
 interface Props {
-  name: "about" | "skills" | "contacts" | "work";
+  name: "home" | "about" | "skills" | "contacts";
 }
 
 const { name } = Astro.props;
-const source = { about, skills, contacts, work }[name];
+const source = { home, about, skills, contacts }[name];
 const viewBox = source.match(/viewBox="([^"]+)"/)![1];
 // These local assets consist entirely of individual rounded rect dots.
 // Keep their geometry; omit the export's shared IDs, classes and color styles.

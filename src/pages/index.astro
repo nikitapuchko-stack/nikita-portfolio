@@ -49,6 +49,9 @@ const projectCovers = Object.fromEntries(await Promise.all(
     <div class="page">
       <header class="site-header">
         <nav class="nav" aria-label="Primary">
+          <button class="nav-link" type="button" data-nav="home" aria-label="Home">
+            <NavDotIcon name="home" />
+          </button>
           <a class="nav-link is-active" href="#about" data-nav="about" data-sidebar-target aria-label="About">
             <NavDotIcon name="about" />
           </a>
@@ -57,17 +60,6 @@ const projectCovers = Object.fromEntries(await Promise.all(
           </a>
           <a class="nav-link" href="#contact" data-nav="contacts" data-sidebar-target aria-label="Contacts">
             <NavDotIcon name="contacts" />
-          </a>
-          <a
-            class="nav-link nav-link-work work-toggle"
-            data-nav="work"
-            href="#work"
-            data-panel-toggle="work-panel"
-            aria-controls="work-panel"
-            aria-expanded="false"
-            aria-label="Work"
-          >
-            <NavDotIcon name="work" />
           </a>
           <button class="nav-back-to-list" type="button" aria-label="Back to project list">
             <span aria-hidden="true" set:html={backToListSvg} />

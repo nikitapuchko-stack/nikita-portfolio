@@ -86,12 +86,12 @@ export function initIntroPalette(view, signal) {
     cancelPending();
     const requestedVersion = ++version;
     if (signal.aborted) return;
-    const image = view.querySelector('.intro-card[data-slot="0"]');
+    const image = view.querySelector('.intro-card[data-slot="0"] img');
     if (!image) return;
     const src = image.src;
     const ready = () => {
       cancelPending();
-      if (signal.aborted || requestedVersion !== version || image.src !== src || image.dataset.slot !== "0") return;
+      if (signal.aborted || requestedVersion !== version || image.src !== src || image.closest('.intro-card').dataset.slot !== "0") return;
       if (!cache.has(src)) {
         const palette = analyzeIntroImagePalette(image);
         if (palette) cache.set(src, palette);
