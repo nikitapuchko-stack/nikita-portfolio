@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import NavDotIcon from "../components/NavDotIcon.astro";
+import IntroView from "../components/IntroView.astro";
 import { getImage } from "astro:assets";
 import cogsCover from "../../public/images/cogs.png";
 import coilCover from "../../public/images/kenya-coffee.png";
@@ -450,6 +451,8 @@ const projectCovers = Object.fromEntries(await Promise.all(
         </div>
       </div>
     </div>
+
+    <IntroView />
 
     <template id="project-closing-template">
       <footer class="project-closing" aria-label="Project closing">

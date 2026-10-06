@@ -1,0 +1,40 @@
+---
+import animation from "../data/intro-dots.json";
+---
+
+<svg
+  class="intro-heading"
+  data-intro-dots
+  viewBox={`0 0 ${animation.width} ${animation.height}`}
+  width={animation.width}
+  height={animation.height}
+  role="img"
+  aria-label={`What I do: ${animation.phrases.map(phrase => phrase.text.toLowerCase()).join(", ")}`}
+  focusable="false"
+>
+  {animation.dots.map(([cx, cy, r]) => <circle cx={cx} cy={cy} r={r} fill="currentColor" opacity="0" />)}
+</svg>
+
+<style>
+  .intro-heading {
+    position: absolute;
+    left: 50%;
+    top: 21.8%;
+    display: block;
+    width: min(23vw, 46dvh, 868px);
+    height: auto;
+    color: var(--intro-fg);
+    transition: color 450ms ease;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  @media (max-width: 960px) {
+    .intro-heading { width: min(54vw, 46dvh, 868px); }
+  }
+  @media (max-height: 500px) {
+    .intro-heading { top: 12%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .intro-heading { transition: none; }
+  }
+</style>
