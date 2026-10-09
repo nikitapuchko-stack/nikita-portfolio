@@ -54,7 +54,7 @@ const projectDefinitions = {
       { src: `${basePath}images/Project_img/Coil_18.jpg`, layout: "full" }
     ],
     title: "COIL Coffee",
-    category: "Packaging design",
+    category: "Brand identity",
     meta: {
       type: "Brand identity",
       role: "Art-director, graphic designer",
@@ -139,9 +139,9 @@ const projectDefinitions = {
       { src: `${basePath}images/Project_img/Birra_14_gr.jpg`, layout: "grid" }
     ],
     title: "Birra Moretti",
-    category: "Packaging design",
+    category: "Rebranding",
     meta: {
-      type: "Packaging design",
+      type: "Rebranding",
       role: "Graphic designer, 3D artist",
       client: "Birra Moretti",
       year: "2025"
@@ -699,46 +699,54 @@ function initWorkExperienceCounter() {
 
   if (!yearsElement || !daysElement) return;
 
-  const now = new Date();
-  const startDate = new Date(2022, 0, 1);
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
+  const updateExperience = () => {
+    const now = new Date();
+    const startDate = new Date(2022, 0, 1);
+    const today = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
 
-  let years = today.getFullYear() - startDate.getFullYear();
+    let years = today.getFullYear() - startDate.getFullYear();
 
-  const anniversaryThisYear = new Date(
-    today.getFullYear(),
-    startDate.getMonth(),
-    startDate.getDate()
-  );
+    const anniversaryThisYear = new Date(
+      today.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate()
+    );
 
-  if (today < anniversaryThisYear) {
-    years -= 1;
-  }
+    if (today < anniversaryThisYear) {
+      years -= 1;
+    }
 
-  const lastAnniversary = new Date(
-    startDate.getFullYear() + years,
-    startDate.getMonth(),
-    startDate.getDate()
-  );
+    const lastAnniversary = new Date(
+      startDate.getFullYear() + years,
+      startDate.getMonth(),
+      startDate.getDate()
+    );
 
-  const anniversaryDate = new Date(
-    lastAnniversary.getFullYear(),
-    lastAnniversary.getMonth(),
-    lastAnniversary.getDate()
-  );
+    const anniversaryDate = new Date(
+      lastAnniversary.getFullYear(),
+      lastAnniversary.getMonth(),
+      lastAnniversary.getDate()
+    );
 
-  const millisecondsPerDay = 1000 * 60 * 60 * 24;
-  const days = Math.max(
-    0,
-    Math.floor((today - anniversaryDate) / millisecondsPerDay)
-  );
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+    const days = Math.max(
+      0,
+      Math.floor((today - anniversaryDate) / millisecondsPerDay)
+    );
 
-  yearsElement.textContent = String(years);
-  daysElement.textContent = String(days);
+    yearsElement.textContent = String(years);
+    daysElement.textContent = String(days);
+    const hoursElement = document.querySelector(".work-hours");
+    const minutesElement = document.querySelector(".work-minutes");
+    if (hoursElement) hoursElement.textContent = String(now.getHours()).padStart(2, "0");
+    if (minutesElement) minutesElement.textContent = String(now.getMinutes()).padStart(2, "0");
+  };
+  updateExperience();
+  window.setInterval(updateExperience, 60000);
 }
 
 function initSkillSetAnimation() {
