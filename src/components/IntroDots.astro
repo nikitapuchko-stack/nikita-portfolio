@@ -34,6 +34,9 @@ import animation from "../data/intro-dots.json";
   @media (max-height: 500px) {
     .intro-heading { top: 12%; }
   }
+  @media (max-width: 960px) {
+    .intro-heading { top: var(--intro-heading-top, 21.8%); }
+  }
   @media (prefers-reduced-motion: reduce) {
     .intro-heading { transition: none; }
   }

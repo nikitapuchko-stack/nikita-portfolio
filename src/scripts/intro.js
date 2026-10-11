@@ -1,6 +1,7 @@
 import { initIntroDots } from "./intro-dots";
 import { initIntroPalette } from "./intro-palette";
 import { initIntroCarousel } from "./intro-carousel";
+import { initIntroBrowserTheme } from "./intro-browser-theme";
 
 export function initIntroView() {
   const view = document.querySelector(".intro-view");
@@ -14,6 +15,7 @@ export function initIntroView() {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const inputs = new AbortController();
   const options = { signal: inputs.signal };
+  initIntroBrowserTheme(view, inputs.signal);
   const wasInert = page.inert;
   page.inert = true;
   view.focus({ preventScroll: true });

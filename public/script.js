@@ -303,6 +303,14 @@ function renderProjectDetail(projectId) {
 
 let destroyProjectScrollUI = () => {};
 
+function getMobilePanelStep(layout) {
+  const panel = layout.querySelector(".work-panel");
+  if (!panel) return layout.clientWidth;
+  // Measure the actual snap position, including the gap and fractional pixels.
+  return panel.getBoundingClientRect().left - layout.getBoundingClientRect().left
+    - layout.clientLeft + layout.scrollLeft;
+}
+
 function openProjectDetailView(projectId) {
   const stage = document.querySelector(".content-stage");
   const layout = document.querySelector(".content-layout");
@@ -319,7 +327,7 @@ function openProjectDetailView(projectId) {
   projectDetailState.savedSidebarTop = sidebarScroller ? sidebarScroller.scrollTop : 0;
   projectDetailState.savedWorkTop = workScroller ? workScroller.scrollTop : 0;
   projectDetailState.wasWorkOpen = window.matchMedia("(max-width: 960px)").matches &&
-    !!(layout && layout.clientWidth > 0 && layout.scrollLeft / layout.clientWidth >= 0.5);
+    !!(layout && layout.clientWidth > 0 && layout.scrollLeft / getMobilePanelStep(layout) >= 0.5);
   projectDetailState.openProjectId = projectId;
   setActiveNav("work");
 
@@ -350,7 +358,7 @@ function closeProjectDetailView() {
     } else {
       layout.classList.remove("is-work-open");
     }
-    layout.scrollTo({ left: projectDetailState.wasWorkOpen ? layout.clientWidth : 0, behavior: "instant" });
+    layout.scrollTo({ left: projectDetailState.wasWorkOpen ? getMobilePanelStep(layout) : 0, behavior: "instant" });
   }
 
   if (sidebarScroller) {
@@ -1234,6 +1242,8 @@ function initCustomScrollbars() {
   setupWorkCarouselLifecycle();
 }
 
+let mobileNavScrollTarget = null;
+
 function setActiveNav(navName) {
   if (document.querySelector('.intro-view')?.dataset.open === "true") navName = "home";
   const links = document.querySelectorAll(".site-header .nav-link[data-nav]");
@@ -1247,7 +1257,7 @@ function setActiveNav(navName) {
     // Touch browsers can keep :hover on Work after a tap and subsequent swipe.
     // On mobile, only the active link should retain the existing blue color.
     if (isMobile && link.dataset.nav !== navName) {
-      link.style.setProperty("color", "var(--ink)");
+      link.style.setProperty("color", link.dataset.nav === "home" ? "var(--blue)" : "#000");
     } else {
       link.style.removeProperty("color");
     }
@@ -1255,10 +1265,14 @@ function setActiveNav(navName) {
 }
 
 function updateSidebarActiveNav() {
+  if (mobileNavScrollTarget && window.matchMedia("(max-width: 960px)").matches) {
+    setActiveNav(mobileNavScrollTarget);
+    return;
+  }
   const layout = document.querySelector(".content-layout");
   if (projectDetailState.openProjectId ||
       (window.matchMedia("(max-width: 960px)").matches && layout?.clientWidth > 0 &&
-        layout.scrollLeft / layout.clientWidth >= 0.5)) {
+        layout.scrollLeft / getMobilePanelStep(layout) >= 0.5)) {
     setActiveNav("work");
     return;
   }
@@ -1285,7 +1299,7 @@ function updateSidebarActiveNav() {
 function updateMobilePanelNavState() {
   const layout = document.querySelector(".content-layout");
   if (layout && window.matchMedia("(max-width: 960px)").matches) {
-    const isOpen = layout.clientWidth > 0 && layout.scrollLeft / layout.clientWidth >= 0.5;
+    const isOpen = layout.clientWidth > 0 && layout.scrollLeft / getMobilePanelStep(layout) >= 0.5;
     // Semantic state only: CSS snap and the browser own all panel movement.
     layout.classList.toggle("is-work-open", isOpen);
     document.querySelector(".work-toggle")?.setAttribute("aria-expanded", String(isOpen));
@@ -1306,6 +1320,34 @@ function initMobileWorkPanel() {
   let previousWidth = layout.clientWidth;
   let wasMobile = mobileQuery.matches;
   let pendingSidebarTarget = null;
+  let navSettleTimer;
+  let navReturnTimer;
+  let returningNavLink = null;
+
+  const finishButtonReturn = () => {
+    clearTimeout(navReturnTimer);
+    returningNavLink?.classList.remove("is-returning");
+    returningNavLink = null;
+  };
+
+  const finishNavScroll = () => {
+    clearTimeout(navSettleTimer);
+    if (!mobileNavScrollTarget) return;
+    navSettleTimer = setTimeout(() => {
+      // Horizontal travel may still need to start the vertical scroll.
+      if (pendingSidebarTarget) { finishNavScroll(); return; }
+      mobileNavScrollTarget = null;
+      updateMobilePanelNavState();
+    }, 180);
+  };
+
+  const cancelNavScroll = () => {
+    clearTimeout(navSettleTimer);
+    finishButtonReturn();
+    mobileNavScrollTarget = null;
+    pendingSidebarTarget = null;
+    scheduleActiveUpdate();
+  };
 
   const scrollSidebarToTarget = () => {
     if (!pendingSidebarTarget || !sidebar) return;
@@ -1320,6 +1362,7 @@ function initMobileWorkPanel() {
   };
 
   const scheduleActiveUpdate = () => {
+    finishNavScroll();
     if (navScrollRaf !== null) return;
     navScrollRaf = requestAnimationFrame(() => {
       navScrollRaf = null;
@@ -1330,7 +1373,7 @@ function initMobileWorkPanel() {
   const scrollToPanel = (isOpen) => {
     if (!mobileQuery.matches) return;
     layout.scrollTo({
-      left: isOpen ? layout.clientWidth : 0,
+      left: isOpen ? getMobilePanelStep(layout) : 0,
       behavior: "auto"
     });
   };
@@ -1346,6 +1389,15 @@ function initMobileWorkPanel() {
     else pendingSidebarTarget = null;
   }, { passive: true });
   sidebar?.addEventListener("scroll", scheduleActiveUpdate, { passive: true });
+  // Restore scroll-based highlighting when the user takes over the motion.
+  for (const scroller of [layout, sidebar].filter(Boolean)) {
+    for (const type of ["touchstart", "wheel", "pointerdown"]) {
+      scroller.addEventListener(type, cancelNavScroll, { passive: true });
+    }
+    scroller.addEventListener("keydown", event => {
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) cancelNavScroll();
+    });
+  }
 
   sidebarLinks.forEach((link) => {
     link.addEventListener("click", (event) => {
@@ -1353,6 +1405,17 @@ function initMobileWorkPanel() {
       if (!sidebar || !target) return;
       event.preventDefault();
       if (projectDetailState.openProjectId) closeProjectDetailView();
+      if (mobileQuery.matches) {
+        finishButtonReturn();
+        returningNavLink = link;
+        link.classList.add("is-returning");
+        // Match the 100ms CSS return; only reveal blue once the button is raised.
+        navReturnTimer = setTimeout(finishButtonReturn,
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 100);
+        mobileNavScrollTarget = link.dataset.nav;
+        setActiveNav(mobileNavScrollTarget);
+        finishNavScroll();
+      }
       pendingSidebarTarget = target;
       scrollToPanel(false);
       if (!mobileQuery.matches || layout.scrollLeft < 1) scrollSidebarToTarget();
@@ -1365,6 +1428,7 @@ function initMobileWorkPanel() {
       return;
     }
     if (projectDetailState.openProjectId) closeProjectDetailView();
+    cancelNavScroll();
     pendingSidebarTarget = null;
     event.preventDefault();
     scrollToPanel(true);
@@ -1375,11 +1439,12 @@ function initMobileWorkPanel() {
     resizeRaf = requestAnimationFrame(() => {
       resizeRaf = null;
       const isMobile = mobileQuery.matches;
+      if (!isMobile) cancelNavScroll();
       const width = layout.clientWidth;
       if (isMobile !== wasMobile || width !== previousWidth) {
         // Preserve the semantic screen across breakpoints without animation.
         const isOpen = layout.classList.contains("is-work-open");
-        layout.scrollTo({ left: isMobile && isOpen ? width : 0, behavior: "instant" });
+        layout.scrollTo({ left: isMobile && isOpen ? getMobilePanelStep(layout) : 0, behavior: "instant" });
         wasMobile = isMobile;
         previousWidth = width;
       }

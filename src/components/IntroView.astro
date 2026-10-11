@@ -16,9 +16,10 @@ const images = await Promise.all(filenames.map(async (name, index) => {
 // Start with teaser 5; keep the full numeric sequence.
 const initialIndex = Math.max(0, filenames.indexOf("5.jpg"));
 const slots = [-3, -2, -1, 0, 1, 2, 3];
+const maxImageAspect = images.length ? Math.max(...images.map(image => image.height / image.width)) : 1;
 ---
 
-<section class="intro-view" role="dialog" aria-modal="true" aria-label="Nikita Puchko portfolio introduction" tabindex="-1" data-active-index={initialIndex}>
+<section class="intro-view" style={`--intro-max-image-aspect: ${maxImageAspect}`} role="dialog" aria-modal="true" aria-label="Nikita Puchko portfolio introduction" tabindex="-1" data-active-index={initialIndex}>
   <span class="intro-dot intro-dot-top-left" aria-hidden="true"></span>
   <span class="intro-dot intro-dot-top-right" aria-hidden="true"></span>
   <span class="intro-dot intro-dot-bottom-left" aria-hidden="true"></span>
@@ -147,11 +148,37 @@ const slots = [-3, -2, -1, 0, 1, 2, 3];
   .intro-enter:hover { background: var(--intro-bg); color: var(--intro-fg); outline: 1px solid var(--intro-fg); }
   .intro-enter:focus-visible { outline: 2px solid var(--intro-fg); outline-offset: 5px; }
   @media (max-width: 960px) {
-    .intro-view { --intro-card-width: min(72vw, 61dvh); }
+    .intro-view {
+      --intro-card-width: min(64vw, 54dvh);
+      --intro-stack-half: calc(var(--intro-card-width) * var(--intro-max-image-aspect) * 0.93);
+      --intro-gallery-gap: 16px;
+      --intro-identity-height: 100px;
+      --intro-heading-half: calc(min(54vw, 46dvh, 868px) * 140 / 868 / 2);
+      --intro-gallery-center: clamp(
+        calc(16px + var(--intro-heading-half) * 2 + var(--intro-gallery-gap) + var(--intro-stack-half)),
+        50dvh,
+        calc(100dvh - 16px - var(--intro-identity-height) - var(--intro-gallery-gap) - var(--intro-stack-half))
+      );
+      --intro-heading-top: calc(var(--intro-gallery-center) - var(--intro-stack-half) - var(--intro-gallery-gap) - var(--intro-heading-half));
+      --intro-identity-top: calc(var(--intro-gallery-center) + var(--intro-stack-half) + var(--intro-gallery-gap));
+    }
+    .intro-carousel {
+      inset: auto 0;
+      top: calc(var(--intro-gallery-center) - var(--intro-stack-half));
+      height: calc(var(--intro-stack-half) * 2);
+    }
+    .intro-card {
+      transform: translate(-50%, -50%) translateY(calc(var(--intro-x, 0%) * 1.5)) scale(var(--intro-scale, 1));
+    }
+    .intro-dot-top-left, .intro-dot-top-right { top: var(--intro-heading-top); }
+    .intro-dot-bottom-left, .intro-dot-bottom-right { top: calc(var(--intro-identity-top) + var(--intro-identity-height) / 2); }
     .intro-dot-top-left, .intro-dot-bottom-left { left: 8%; }
     .intro-dot-top-right, .intro-dot-bottom-right { left: 92%; }
-    .intro-identity { font-size: 14px; }
+    .intro-identity { top: var(--intro-identity-top); font-size: 14px; }
     .intro-enter { min-height: 44px; font-size: 20px; }
+  }
+  @media (max-width: 600px) {
+    .intro-view { --intro-card-width: 92vw; --intro-gallery-gap: 32px; }
   }
   @media (max-height: 500px) {
     .intro-dot-top-left, .intro-dot-top-right { top: 12%; }
@@ -159,6 +186,15 @@ const slots = [-3, -2, -1, 0, 1, 2, 3];
     .intro-view { --intro-card-width: min(45vw, 58dvh); }
     .intro-identity { top: 72%; font-size: 12px; line-height: 1.4; }
     .intro-enter { margin-top: 4px; min-height: 32px; font-size: 16px; }
+  }
+  @media (max-width: 960px) and (max-height: 500px) {
+    .intro-view { --intro-identity-height: 70px; }
+    .intro-carousel {
+      inset: auto 0;
+      top: calc(var(--intro-gallery-center) - var(--intro-stack-half));
+    }
+    .intro-dot-top-left, .intro-dot-top-right { top: var(--intro-heading-top); }
+    .intro-identity { top: var(--intro-identity-top); }
   }
   @media (prefers-reduced-motion: reduce) {
     .intro-view, .intro-card, .intro-dot, .intro-enter, .intro-loading-mask { transition: none; }

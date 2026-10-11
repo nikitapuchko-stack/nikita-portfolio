@@ -3,6 +3,9 @@ import about from "../../public/images/Header buttons/About.svg?raw";
 import skills from "../../public/images/Header buttons/Skills.svg?raw";
 import contacts from "../../public/images/Header buttons/Contacts.svg?raw";
 import home from "../../public/images/Header buttons/Home.svg?raw";
+import aboutMobile from "../../public/images/Header buttons/About_mobile.svg?raw";
+import skillsMobile from "../../public/images/Header buttons/Skills_mobile.svg?raw";
+import contactsMobile from "../../public/images/Header buttons/Contacts_mobile.svg?raw";
 
 interface Props {
   name: "home" | "about" | "skills" | "contacts";
@@ -11,6 +14,8 @@ interface Props {
 const { name } = Astro.props;
 const source = { home, about, skills, contacts }[name];
 const viewBox = source.match(/viewBox="([^"]+)"/)![1];
+const mobileSource = name === "home" ? "" : { about: aboutMobile, skills: skillsMobile, contacts: contactsMobile }[name];
+const mobileSvg = mobileSource.replace(/fill="#[0-9a-f]+"/gi, 'fill="currentColor"');
 // These local assets consist entirely of individual rounded rect dots.
 // Keep their geometry; omit the export's shared IDs, classes and color styles.
 const dots = [...source.matchAll(/<rect\b[^>]*\/>/g)]
@@ -20,4 +25,7 @@ const dots = [...source.matchAll(/<rect\b[^>]*\/>/g)]
 
 <span class={`nav-svg nav-svg-${name}`} aria-hidden="true">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox={viewBox} focusable="false" set:html={dots} />
+</span>
+<span class={`nav-mobile-face nav-mobile-face-${name}`} aria-hidden="true">
+  {name === "home" ? <span class="nav-home-circle" /> : <span class="nav-mobile-icon" set:html={mobileSvg} />}
 </span>
