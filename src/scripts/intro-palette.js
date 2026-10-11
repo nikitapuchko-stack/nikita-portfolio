@@ -57,7 +57,7 @@ export function getRepresentativeColors(imageData) {
   return { background, foreground };
 }
 
-export function initIntroPalette(view, signal) {
+export function initIntroPalette(view, signal, applyPalette) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 48;
   const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -78,8 +78,10 @@ export function initIntroPalette(view, signal) {
 
   function applyIntroPalette(palette) {
     if (!palette) return;
-    view.style.setProperty("--intro-bg", `rgb(${palette.background.join(", ")})`);
-    view.style.setProperty("--intro-fg", `rgb(${palette.foreground.join(", ")})`);
+    applyPalette({
+      background: `rgb(${palette.background.join(", ")})`,
+      foreground: `rgb(${palette.foreground.join(", ")})`,
+    });
   }
 
   function updateIntroPaletteForActiveCard() {

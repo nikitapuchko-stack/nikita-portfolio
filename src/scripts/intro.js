@@ -15,7 +15,7 @@ export function initIntroView() {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const inputs = new AbortController();
   const options = { signal: inputs.signal };
-  initIntroBrowserTheme(view, inputs.signal);
+  const browserTheme = initIntroBrowserTheme(view, inputs.signal);
   const wasInert = page.inert;
   page.inert = true;
   view.focus({ preventScroll: true });
@@ -44,6 +44,7 @@ export function initIntroView() {
       clearTimeout(finishTimer);
       view.removeEventListener("transitionend", onEnd);
       view.hidden = true;
+      browserTheme.restore();
       view.inert = true;
       page.inert = wasInert;
       page.querySelector(".nav-link.is-active")?.focus({ preventScroll: true });
@@ -64,6 +65,7 @@ export function initIntroView() {
     view.dataset.open = "true";
     page.inert = true;
     view.hidden = false;
+    browserTheme.applyIntroPalette();
     view.inert = false;
     button.disabled = false;
     // Establish the offscreen position after display:none before transitioning in.
@@ -93,7 +95,7 @@ export function initIntroView() {
     await new Promise(resolve => setTimeout(resolve, reducedMotion.matches ? 0 : 470));
     view.classList.add('is-ready');
     initIntroDots(view, inputs.signal);
-    const updateIntroPaletteForActiveCard = initIntroPalette(view, inputs.signal);
+    const updateIntroPaletteForActiveCard = initIntroPalette(view, inputs.signal, browserTheme.applyIntroPalette);
     initIntroCarousel(view, images, inputs.signal, updateIntroPaletteForActiveCard);
     if (closed) view.dispatchEvent(new Event("intro:pause"));
   }

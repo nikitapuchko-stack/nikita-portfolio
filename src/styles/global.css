@@ -30,6 +30,35 @@ body {
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--bg);
+}
+
+/* Solid viewport-edge surfaces for mobile Safari chrome sampling. */
+.safari-tint-sampler {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 2147483000;
+  pointer-events: none;
+  background: var(--intro-bg);
+  opacity: 1;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  mix-blend-mode: normal;
+  transform: none;
+  transition: none;
+}
+
+.safari-tint-sampler--top { top: 0; }
+.safari-tint-sampler--bottom { bottom: 0; }
+
+@media (max-width: 960px) {
+  .safari-tint-sampler.is-active { display: block; }
 }
 
 body {
