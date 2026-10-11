@@ -31,6 +31,7 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
   const cards = [...carousel.querySelectorAll(".intro-card")];
   const cardImages = new Map(cards.map(card => [card, card.querySelector("img")]));
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const mobile = window.matchMedia("(max-width: 960px)");
   const options = { signal };
   const pixelsPerCard = 240;
   const wheelSensitivity = 0.012;
@@ -135,8 +136,14 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
 
   carousel.addEventListener("touchstart", event => {
     cancelSnap();
+    // A new drag takes over at the visible position, without queued motion.
+    if (mobile.matches) targetPosition = currentPosition;
     touch = event.touches.length === 1
-      ? { x: event.touches[0].clientX, y: event.touches[0].clientY, vertical: false }
+      ? {
+        x: event.touches[0].clientX, y: event.touches[0].clientY, vertical: false,
+        time: performance.now(), velocity: 0,
+        pixelsPerCard: mobile.matches ? Math.max(90, Math.min(150, view.clientHeight * 0.18)) : pixelsPerCard,
+      }
       : null;
   }, { ...options, passive: true });
   carousel.addEventListener("touchmove", event => {
@@ -147,11 +154,30 @@ export function initIntroCarousel(view, images, signal, onCenterChange) {
     if (!touch.vertical && Math.abs(dy) > 4 && Math.abs(dy) > Math.abs(dx)) touch.vertical = true;
     if (!touch.vertical) return;
     event.preventDefault();
-    moveBy(dy);
+    const now = performance.now();
+    const elapsed = Math.max(8, now - touch.time);
+    touch.velocity = elapsed > 100 ? 0 : dy / elapsed;
+    touch.time = now;
+    moveBy(dy, 1 / touch.pixelsPerCard);
+    if (mobile.matches) {
+      // Touch already provides continuous input: avoid an extra easing delay.
+      currentPosition = targetPosition;
+      renderIntroCarouselPosition();
+    }
     touch.y = point.clientY;
     touch.x = point.clientX;
   }, { ...options, passive: false });
-  const finishTouch = () => { touch = null; snapIntroCarousel(); };
+  const finishTouch = event => {
+    let target = targetPosition;
+    if (mobile.matches && touch?.vertical && event.type !== "touchcancel"
+      && performance.now() - touch.time < 80) {
+      // A short flick can finish a step; cap momentum to avoid skipping a stack.
+      const impulse = touch.velocity * 100 / touch.pixelsPerCard;
+      target += Math.max(-0.75, Math.min(0.75, impulse));
+    }
+    touch = null;
+    snapIntroCarousel(Math.round(target));
+  };
   carousel.addEventListener("touchend", finishTouch, options);
   carousel.addEventListener("touchcancel", finishTouch, options);
 

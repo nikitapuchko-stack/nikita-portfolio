@@ -311,7 +311,7 @@ function getMobilePanelStep(layout) {
     - layout.clientLeft + layout.scrollLeft;
 }
 
-function openProjectDetailView(projectId) {
+function openProjectDetailView(projectId, prepared = false) {
   const stage = document.querySelector(".content-stage");
   const layout = document.querySelector(".content-layout");
   const projectDetailScroller = document.querySelector(".project-detail-scroller");
@@ -331,7 +331,7 @@ function openProjectDetailView(projectId) {
   projectDetailState.openProjectId = projectId;
   setActiveNav("work");
 
-  renderProjectDetail(projectId);
+  if (!prepared) renderProjectDetail(projectId);
   stage.classList.add("is-project-open");
 
   if (projectDetailScroller) {
@@ -1492,45 +1492,165 @@ function initMobileWorkPanel() {
   updateMobilePanelNavState();
 }
 
+function initMobilePageHint() {
+  const hint = document.querySelector(".mobile-page-hint");
+  const stage = document.querySelector(".content-stage");
+  const layout = document.querySelector(".content-layout");
+  const carousel = document.querySelector(".work-panel .carousel");
+  if (!hint || !stage || !layout || !carousel) return;
+  const mobile = window.matchMedia("(max-width: 960px)");
+  let gesture = null;
+  let suppressClickUntil = 0;
+  const releaseDrag = () => {
+    // Preserve the last finger position as the transition's starting frame.
+    void stage.offsetWidth;
+    stage.classList.remove("is-project-dragging");
+    stage.style.removeProperty("--project-swipe-progress");
+  };
+  const cancelGesture = () => {
+    if (gesture?.locked) releaseDrag();
+    gesture = null;
+  };
+  const update = () => {
+    const page = projectDetailState.openProjectId ? "project"
+      : layout.clientWidth > 0 && layout.scrollLeft >= getMobilePanelStep(layout) * 0.5 ? "work" : "main";
+    hint.dataset.page = page;
+    hint.setAttribute("aria-label", "Current page: " + page.toUpperCase());
+  };
+  new MutationObserver(update).observe(stage, { attributes: true, attributeFilter: ["class"] });
+  layout.addEventListener("scroll", update, { passive: true });
+  mobile.addEventListener("change", () => { cancelGesture(); update(); });
+  window.addEventListener("resize", () => { cancelGesture(); update(); });
+
+  stage.addEventListener("touchstart", event => {
+    cancelGesture();
+    if (!mobile.matches || event.touches.length !== 1) return;
+    const point = event.touches[0];
+    const project = !!projectDetailState.openProjectId;
+    const work = Math.abs(layout.scrollLeft - getMobilePanelStep(layout)) < 2;
+    if (!project && !work) return;
+    gesture = {
+      x: point.clientX, y: point.clientY, project, dx: 0, locked: false,
+      width: stage.clientWidth, time: performance.now(), velocity: 0,
+    };
+  }, { passive: true });
+  stage.addEventListener("touchmove", event => {
+    if (!gesture) return;
+    if (event.touches.length !== 1) { cancelGesture(); return; }
+    const point = event.touches[0];
+    const dx = point.clientX - gesture.x;
+    const dy = point.clientY - gesture.y;
+    if (!gesture.locked) {
+      if (Math.abs(dy) > 8 && Math.abs(dy) >= Math.abs(dx)) { gesture = null; return; }
+      const direction = gesture.project ? dx > 0 : dx < 0;
+      if (!direction || Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
+      if (!gesture.project) {
+        const bounds = carousel.getBoundingClientRect();
+        const slide = [...carousel.querySelectorAll(".slide[data-project]")].find(card => {
+          const rect = card.getBoundingClientRect();
+          return rect.bottom > bounds.top + 1 && rect.top < bounds.bottom;
+        });
+        if (!slide) { gesture = null; return; }
+        gesture.projectId = slide.dataset.project;
+        renderProjectDetail(gesture.projectId);
+        document.querySelector(".project-detail-scroller").scrollTop = 0;
+      }
+      gesture.locked = true;
+      stage.style.setProperty("--project-swipe-progress", gesture.project ? "1" : "0");
+      stage.classList.add("is-project-dragging");
+    }
+    const now = performance.now();
+    gesture.velocity = (dx - gesture.dx) / Math.max(8, now - gesture.time);
+    gesture.time = now;
+    gesture.dx = dx;
+    const progress = Math.max(0, Math.min(1, (gesture.project ? 1 : 0) - dx / gesture.width));
+    stage.style.setProperty("--project-swipe-progress", String(progress));
+    event.preventDefault();
+  }, { passive: false });
+  stage.addEventListener("touchend", event => {
+    const completed = gesture;
+    gesture = null;
+    if (!completed?.locked) return;
+    suppressClickUntil = performance.now() + 400;
+    const direction = completed.project ? 1 : -1;
+    const distance = completed.dx * direction;
+    const velocity = performance.now() - completed.time < 80 ? completed.velocity * direction : 0;
+    const commit = !event.touches.length && (distance > completed.width * 0.35
+      || (distance > 25 && velocity > 0.45));
+    if (commit && completed.project) {
+      projectDetailState.wasWorkOpen = true;
+      closeProjectDetailView();
+    } else if (commit && !completed.project) {
+      openProjectDetailView(completed.projectId, true);
+    }
+    releaseDrag();
+    update();
+  }, { passive: true });
+  stage.addEventListener("touchcancel", cancelGesture, { passive: true });
+  stage.addEventListener("click", event => {
+    if (performance.now() < suppressClickUntil) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }, true);
+  update();
+}
+
 function initMobileProjectOverlay() {
   const carousel = document.querySelector(".work-panel .carousel");
-
   if (!carousel) return;
+  const mobile = window.matchMedia("(max-width: 960px)");
+  let touching = false;
+  let mouseHeld = false;
+  let idleTimer;
 
-  const updateTopSlide = () => {
-    if (!window.matchMedia("(max-width: 960px)").matches) {
-      carousel.querySelectorAll(".slide").forEach((slide) => {
-        slide.classList.remove("is-top");
-      });
-      return;
-    }
-
-    const slides = [...carousel.querySelectorAll(".slide")];
-
-    if (!slides.length) return;
-
-    const containerTop = carousel.getBoundingClientRect().top;
-    const triggerY = window.innerHeight * 0.5;
-    let activeSlide = slides[0];
-
-    slides.forEach((slide) => {
-      const rect = slide.getBoundingClientRect();
-      const isPastTrigger = rect.top <= triggerY;
-      const isStillVisible = rect.top >= containerTop - 16;
-
-      if (isPastTrigger && isStillVisible) {
-        activeSlide = slide;
-      }
-    });
-
-    slides.forEach((slide) => {
-      slide.classList.toggle("is-top", slide === activeSlide);
-    });
+  const hide = () => {
+    clearTimeout(idleTimer);
+    if (mobile.matches) carousel.classList.add("is-interacting");
   };
-
-  updateTopSlide();
-  carousel.addEventListener("scroll", updateTopSlide, { passive: true });
-  window.addEventListener("resize", updateTopSlide);
+  const scheduleReveal = () => {
+    clearTimeout(idleTimer);
+    if (touching || mouseHeld) return;
+    // Momentum events restart this quiet period after the finger is released.
+    idleTimer = setTimeout(() => {
+      if (!touching && !mouseHeld) carousel.classList.remove("is-interacting");
+    }, 180);
+  };
+  carousel.addEventListener("scroll", () => {
+    hide();
+    scheduleReveal();
+  }, { passive: true });
+  carousel.addEventListener("touchstart", () => {
+    touching = true;
+    hide();
+  }, { passive: true });
+  const finishTouch = event => {
+    touching = event.touches.length > 0;
+    scheduleReveal();
+  };
+  window.addEventListener("touchend", finishTouch, { passive: true });
+  window.addEventListener("touchcancel", finishTouch, { passive: true });
+  carousel.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "mouse") return;
+    mouseHeld = true;
+    hide();
+  }, { passive: true });
+  const finishMouse = event => {
+    if (event.pointerType !== "mouse") return;
+    mouseHeld = false;
+    scheduleReveal();
+  };
+  window.addEventListener("pointerup", finishMouse, { passive: true });
+  window.addEventListener("pointercancel", finishMouse, { passive: true });
+  window.addEventListener("blur", () => {
+    touching = mouseHeld = false;
+    scheduleReveal();
+  });
+  mobile.addEventListener("change", () => {
+    clearTimeout(idleTimer);
+    touching = mouseHeld = false;
+    carousel.classList.remove("is-interacting");
+  });
 }
 
 document.addEventListener("intro:visibility", updateSidebarActiveNav);
@@ -1565,6 +1685,7 @@ if (document.readyState === "loading") {
       initProjectDetailView();
       initMobileWorkPanel();
       initMobileProjectOverlay();
+      initMobilePageHint();
     }
   );
 } else {

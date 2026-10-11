@@ -33,34 +33,6 @@ html {
   background-color: var(--bg);
 }
 
-/* Solid viewport-edge surfaces for mobile Safari chrome sampling. */
-.safari-tint-sampler {
-  display: none;
-  position: fixed;
-  left: 0;
-  right: 0;
-  height: 4px;
-  z-index: 2147483000;
-  pointer-events: none;
-  background: var(--intro-bg);
-  opacity: 1;
-  border: 0;
-  box-shadow: none;
-  filter: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  mix-blend-mode: normal;
-  transform: none;
-  transition: none;
-}
-
-.safari-tint-sampler--top { top: 0; }
-.safari-tint-sampler--bottom { bottom: 0; }
-
-@media (max-width: 960px) {
-  .safari-tint-sampler.is-active { display: block; }
-}
-
 body {
   font-family: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
   background: var(--bg);
@@ -95,6 +67,8 @@ a {
   z-index: 100;
   background: #ECECEC;
 }
+
+.mobile-page-hint { display: none; }
 
 .nav {
   position: relative;
@@ -243,6 +217,18 @@ a {
 .content-stage.is-project-open .project-detail-view {
   transform: translateX(0);
   pointer-events: auto;
+}
+
+@media (max-width: 960px) {
+  .content-stage.is-project-dragging .main-view {
+    transform: translateX(calc(var(--project-swipe-progress) * -100%));
+    transition: none;
+  }
+
+  .content-stage.is-project-dragging .project-detail-view {
+    transform: translateX(calc((1 - var(--project-swipe-progress)) * 100%));
+    transition: none;
+  }
 }
 
 .project-detail-scroller {
@@ -440,6 +426,17 @@ a {
   text-transform: uppercase;
 }
 
+.project-text .project-block-label {
+  margin: 0;
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: var(--project-heading-size);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
 .project-overview p,
 .project-text p {
   margin: 0;
@@ -466,8 +463,8 @@ a {
 
 .project-dot-separator {
   height: var(--separator-dot-size);
-  margin-top: 32px;
-  margin-bottom: 32px;
+  margin-top: 64px;
+  margin-bottom: 64px;
 }
 
 .project-dot-separator + .project-text {
@@ -546,17 +543,6 @@ a {
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
     column-gap: var(--gap);
     align-items: start;
-  }
-
-  .project-text .project-block-label {
-    margin: 0;
-    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
-    font-size: var(--project-heading-size);
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: 0;
-    text-transform: uppercase;
-    color: var(--ink);
   }
 
   .project-scroll-control {
@@ -700,7 +686,7 @@ a {
   }
 
   .project-meta {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px 12px;
   }
 
@@ -1644,11 +1630,55 @@ a {
     margin-inline: -4px;
   }
 
+  .mobile-page-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 0;
+    color: var(--blue);
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .mobile-page-hint-track {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 45px;
+    height: 12px;
+    padding: 0 3px;
+    border-radius: 999px;
+    background: var(--blue);
+  }
+
+  .mobile-page-hint-track span {
+    display: grid;
+    place-items: center;
+    width: 6px;
+    height: 6px;
+  }
+
+  .mobile-page-hint-track span::after {
+    content: '';
+    width: 2.5px;
+    height: 2.5px;
+    border-radius: 50%;
+    background: var(--bg);
+    transition: width 160ms ease, height 160ms ease;
+  }
+
+  .mobile-page-hint[data-page="main"] span:nth-child(1)::after,
+  .mobile-page-hint[data-page="work"] span:nth-child(2)::after,
+  .mobile-page-hint[data-page="project"] span:nth-child(3)::after {
+    width: 6px;
+    height: 6px;
+  }
+
   .nav {
     display: grid;
-    grid-template-columns: 90fr 209fr 281fr 232fr;
+    grid-template-columns: 90fr 209fr 232fr 281fr;
     gap: 0;
-    padding: 24px 0 14px;
+    padding: 10px 0 14px;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -1667,14 +1697,11 @@ a {
   .nav-link + .nav-link { border-left: 0; }
   .nav-link[data-nav="home"] { order: 0; color: var(--blue); }
   .nav-link[data-nav="about"] { order: 1; }
-  .nav-link[data-nav="contacts"] { order: 2; }
-  .nav-link[data-nav="skills"] { order: 3; }
+  .nav-link[data-nav="skills"] { order: 2; }
+  .nav-link[data-nav="contacts"] { order: 3; }
   .nav-back-to-list { display: none; order: 4; }
   .page:has(> .content-stage.is-project-open) .nav-back-to-list:not(:disabled) {
-    display: block;
-    grid-column: 1 / -1;
-    justify-self: start;
-    margin-top: 14px;
+    display: none;
   }
   .nav-link .nav-svg { display: none; }
   .nav-link:hover { color: #000; background: var(--bg); }
@@ -1848,14 +1875,14 @@ a {
     width: 100%;
     max-width: 100%;
     padding: 8px 12px;
-    transform: translateY(120%);
-    opacity: 0;
+    transform: translateY(0);
+    opacity: 1;
     transition: transform 0.25s ease, opacity 0.25s ease;
   }
 
-  .work-panel .slide.is-top .project-hover-info {
-    transform: translateY(0);
-    opacity: 1;
+  .work-panel .carousel.is-interacting .project-hover-info {
+    transform: translateY(120%);
+    opacity: 0;
   }
 
   .work-panel .project-hover-info h2,
@@ -2049,6 +2076,8 @@ a {
 }
 
 .sidebar .brand-block {
+  --brand-type-size: clamp(14px, 3.46cqi, 30px);
+  --brand-line-step: calc(var(--brand-type-size) * 1.38);
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: start;
@@ -2059,7 +2088,7 @@ a {
 }
 
 .sidebar .name, .sidebar .role, .brand-experience p, .brand-focus p {
-  font-size: clamp(14px, 3.46cqi, 30px);
+  font-size: var(--brand-type-size);
   font-weight: 400;
   line-height: 1.38;
   letter-spacing: 0;
@@ -2075,10 +2104,11 @@ a {
 
 .sidebar .brand-status-label {
   display: block;
-  margin-bottom: 8px;
+  height: var(--brand-line-step);
+  margin-bottom: 0;
   font-size: clamp(9px, 1.73cqi, 15px);
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.38;
   letter-spacing: 0;
   color: var(--ink);
 }
@@ -2096,13 +2126,13 @@ a {
   grid-column: 1 / -1;
   justify-self: center;
   width: 26%;
-  margin: calc(var(--sidebar-space) * .2) 0 0;
+  margin: calc(var(--sidebar-space) * .2) 0;
   border: 0;
   background: var(--blue);
 }
 
 .sidebar .role, .brand-focus {
-  align-self: end;
+  align-self: start;
 }
 
 .sidebar-explore {
