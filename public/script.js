@@ -1411,7 +1411,7 @@ function initMobileWorkPanel() {
         link.classList.add("is-returning");
         // Match the 100ms CSS return; only reveal blue once the button is raised.
         navReturnTimer = setTimeout(finishButtonReturn,
-          window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 100);
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : link.classList.contains("is-pressed") ? 200 : 100);
         mobileNavScrollTarget = link.dataset.nav;
         setActiveNav(mobileNavScrollTarget);
         finishNavScroll();
@@ -1420,6 +1420,32 @@ function initMobileWorkPanel() {
       scrollToPanel(false);
       if (!mobileQuery.matches || layout.scrollLeft < 1) scrollSidebarToTarget();
     });
+  });
+
+  // iOS does not reliably expose :active for touch taps. Keep an explicit press
+  // through at least one visible depression before allowing the button to rise.
+  document.querySelectorAll(".site-header .nav-link").forEach(link => {
+    let pressedAt = 0;
+    let releaseTimer;
+    const release = () => {
+      clearTimeout(releaseTimer);
+      const remaining = Math.max(0, 100 - (performance.now() - pressedAt));
+      releaseTimer = setTimeout(() => {
+        link.classList.remove("is-pressed");
+        if (link.classList.contains("is-returning")) {
+          clearTimeout(navReturnTimer);
+          navReturnTimer = setTimeout(finishButtonReturn, 100);
+        }
+      }, remaining);
+    };
+    link.addEventListener("pointerdown", event => {
+      if (!mobileQuery.matches || !event.isPrimary) return;
+      clearTimeout(releaseTimer);
+      pressedAt = performance.now();
+      link.classList.add("is-pressed");
+      link.setPointerCapture(event.pointerId);
+    });
+    for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) link.addEventListener(type, release);
   });
 
   toggle?.addEventListener("click", (event) => {

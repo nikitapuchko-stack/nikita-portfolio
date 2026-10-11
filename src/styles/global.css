@@ -1681,18 +1681,21 @@ a {
   .nav-mobile-icon { display: block; min-width: 0; }
   .nav-mobile-icon svg { display: block; width: auto; max-width: 100%; height: clamp(12px, 3vw, 18px); }
 
-  .nav-link:active {
+  .nav-link:active,
+  .nav-link.is-pressed {
     background: #e4e4e4;
     box-shadow: inset 1px 2px 4px rgba(0, 0, 0, 0.14), inset -1px -1px 2px rgba(255, 255, 255, 0.6);
     transform: scale(0.985);
   }
 
-  .nav-link:active .nav-mobile-face {
+  .nav-link:active .nav-mobile-face,
+  .nav-link.is-pressed .nav-mobile-face {
     transform: translateY(1px) scale(0.96);
     box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.12), inset -1px -1px 2px rgba(255, 255, 255, 0.6);
   }
 
   .nav-link:active .nav-mobile-icon,
+  .nav-link.is-pressed .nav-mobile-icon,
   .nav-link.is-returning .nav-mobile-icon {
     color: #888;
   }
