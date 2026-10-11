@@ -1445,6 +1445,14 @@ function initMobileWorkPanel() {
       link.classList.add("is-pressed");
       link.setPointerCapture(event.pointerId);
     });
+    link.addEventListener("click", () => {
+      if (!mobileQuery.matches || link.classList.contains("is-pressed")) return;
+      // Some touch browsers defer click until after pointerup. Replay the press
+      // if that delay has already consumed the visible touch-down state.
+      pressedAt = performance.now();
+      link.classList.add("is-pressed");
+      release();
+    }, { capture: true });
     for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) link.addEventListener(type, release);
   });
 

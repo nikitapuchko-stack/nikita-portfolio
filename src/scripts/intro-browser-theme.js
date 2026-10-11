@@ -2,7 +2,7 @@
 export function initIntroBrowserTheme(view, signal) {
   const mobile = window.matchMedia("(max-width: 960px)");
   const existingMeta = document.querySelector('meta[name="theme-color"]');
-  const meta = existingMeta || document.createElement("meta");
+  let meta = existingMeta || document.createElement("meta");
   meta.name = "theme-color";
   const originalContent = meta.getAttribute("content");
   const backgrounds = [document.documentElement, document.body].map(element => ({
@@ -27,6 +27,7 @@ export function initIntroBrowserTheme(view, signal) {
   let raf = null;
   let until = 0;
   let lastColor = null;
+  let pendingMetaCommit = false;
 
   function restore() {
     for (const edge of edges) edge.style.display = "none";
@@ -39,6 +40,7 @@ export function initIntroBrowserTheme(view, signal) {
     else if (originalContent === null) meta.removeAttribute("content");
     else meta.setAttribute("content", originalContent);
     lastColor = null;
+    pendingMetaCommit = false;
   }
 
   function sync(now) {
@@ -52,6 +54,7 @@ export function initIntroBrowserTheme(view, signal) {
     if (color !== lastColor) {
       if (!meta.isConnected) document.head.append(meta);
       meta.setAttribute("content", color);
+      pendingMetaCommit = true;
       for (const { element } of backgrounds) element.style.setProperty("background-color", color);
       for (const edge of edges) {
         edge.style.display = "block";
@@ -60,6 +63,14 @@ export function initIntroBrowserTheme(view, signal) {
       lastColor = color;
     }
     if (now < until) raf = requestAnimationFrame(sync);
+    else if (pendingMetaCommit) {
+      // Commit a fresh node after the transition for browsers that cache a
+      // previously parsed theme-color rather than re-reading its content.
+      const refreshed = meta.cloneNode(false);
+      meta.replaceWith(refreshed);
+      meta = refreshed;
+      pendingMetaCommit = false;
+    }
   }
 
   function schedule() {
